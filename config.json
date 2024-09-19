@@ -1,0 +1,6 @@
+{
+  "auto_archive": true,
+  "archive_size_limit_mb": 100,
+  "log_folder": "C:/Everquest/Logs",
+  "check_interval": 1
+}
