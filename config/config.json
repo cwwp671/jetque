@@ -1,0 +1,7 @@
+{
+  "log_directory": "C:/Everquest/Logs",
+  "dbg_file": "dbg.txt",
+  "check_interval": 1,
+  "auto_archive": true,
+  "archive_size_limit_mb": 100
+}
