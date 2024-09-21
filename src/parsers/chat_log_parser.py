@@ -1,73 +1,66 @@
-import time
-import os
-from src.parsers.dbg_log_parser import parse_dbg_file
+import re
+from src.parsers.log_parser import LogParser
 
-def find_chat_log_file(log_directory, dbg_file_path):
+class ChatLogParser(LogParser):
     """
-    Determines the correct character's chat log file by parsing the dbg.txt file.
-
-    :param log_directory: Path to the EverQuest logs directory.
-    :param dbg_file_path: Path to the dbg.txt file.
-    :return: Full path of the character's chat log file.
+    A class for parsing chat log files for specific combat events.
     """
-    server_name, player_name, _ = parse_dbg_file(dbg_file_path)
 
-    if server_name and player_name:
-        chat_log_filename = f"eqlog_{player_name}_{server_name}.txt"
-        chat_log_path = os.path.join(log_directory, chat_log_filename)
+    # Compile regex patterns for player outgoing and incoming damage
+    outgoing_damage_greater_than_one_regex = re.compile(
+        r"You (crush|punch|slash|pierce|hit) (\w+(?: \w+)*) for (\d+) points of damage."
+    )
 
-        if os.path.exists(chat_log_path):
-            print(f"Found chat log for character: {player_name} on server: {server_name}")
-            return chat_log_path
-        else:
-            print(f"Chat log file {chat_log_filename} not found in {log_directory}")
-    else:
-        print("Unable to determine active character and server from dbg.txt.")
+    outgoing_damage_equal_one_regex = re.compile(
+        r"You (crush|punch|slash|pierce|hit) (\w+(?: \w+)*) for 1 point of damage."
+    )
 
-    return None
+    incoming_damage_greater_than_one_regex = re.compile(
+        r"(\w+(?: \w+)*) (crushes|punches|slashes|pierces|hits|gores|mauls|bites|stings|claws|slices|smashes|rends|slams|burns|frenzies on) YOU for (\d+) points of damage."
+    )
 
-def tail_log_file(log_file_path, check_interval=1):
-    """
-    Monitors the specified log file for new lines in real-time.
+    incoming_damage_equal_one_regex = re.compile(
+        r"(\w+(?: \w+)*) (crushes|punches|slashes|pierces|hits|gores|mauls|bites|stings|claws|slices|smashes|rends|slams|burns|frenzies on) YOU for 1 point of damage."
+    )
 
-    :param log_file_path: Path to the chat log file.
-    :param check_interval: How often to check for new lines (in seconds).
-    """
-    with open(log_file_path, 'r') as log_file:
-        log_file.seek(0, os.SEEK_END)  # Start at the end of the file
+    def parse_line(self, line):
+        """
+        Parses a single line from the chat log for basic combat damage events.
 
-        while True:
-            line = log_file.readline()
-            if not line:
-                time.sleep(check_interval)  # Wait for new data
-                continue
-            process_log_line(line.strip())
+        :param line: The line to parse.
+        """
+        # Check for outgoing damage (greater than one)
+        outgoing_match = self.outgoing_damage_greater_than_one_regex.search(line)
+        if outgoing_match:
+            damage_type, monster_name, damage = outgoing_match.groups()
+            print(f"Outgoing Damage: You {damage_type} {monster_name} for {damage} points of damage.")
+            return
 
-def monitor_chat_log(log_file_path, check_interval=1):
-    """
-    Monitors the specified chat log file for new lines in real-time.
+        # Check for outgoing damage (exactly one point)
+        outgoing_match_one = self.outgoing_damage_equal_one_regex.search(line)
+        if outgoing_match_one:
+            damage_type, monster_name = outgoing_match_one.groups()
+            print(f"Outgoing Damage: You {damage_type} {monster_name} for 1 point of damage.")
+            return
 
-    :param log_file_path: Full path to the character's chat log file.
-    :param check_interval: How often to check for new lines (in seconds).
-    """
-    if os.path.exists(log_file_path):
-        with open(log_file_path, 'r') as log_file:
-            log_file.seek(0, os.SEEK_END)  # Start at the end of the file
+        # Check for incoming damage (greater than one)
+        incoming_match = self.incoming_damage_greater_than_one_regex.search(line)
+        if incoming_match:
+            monster_name, damage_type, damage = incoming_match.groups()
+            print(f"Incoming Damage: {monster_name} {damage_type} YOU for {damage} points of damage.")
+            return
 
-            while True:
-                line = log_file.readline()
-                if not line:
-                    time.sleep(check_interval)
-                    continue
-                process_log_line(line.strip())
-    else:
-        print(f"Chat log file not found: {log_file_path}")
+        # Check for incoming damage (exactly one point)
+        incoming_match_one = self.incoming_damage_equal_one_regex.search(line)
+        if incoming_match_one:
+            monster_name, damage_type = incoming_match_one.groups()
+            print(f"Incoming Damage: {monster_name} {damage_type} YOU for 1 point of damage.")
+            return
 
-def process_log_line(line):
-    """
-    Placeholder function to process each line from the log file.
-
-    :param line: A new line from the chat log file.
-    """
-    print(f"New log line: {line}")
-    # Add event parsing logic here
+    def monitor(self):
+        """
+        Monitor the chat log in real-time for new lines.
+        """
+        lines = self.read_lines()  # Inherited from LogParser
+        for line in lines:
+            self.parse_line(line)
