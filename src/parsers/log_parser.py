@@ -19,8 +19,6 @@ class LogParser:
         Read new lines from the log file, handling dynamic user actions (truncation, renaming, deletion).
         """
         if not self.file_exists():
-            # Handle file not existing gracefully, maybe log or retry later
-            print(f"Log file '{self.log_file_path}' does not exist.")
             self.file_size = 0  # Reset the size since the file no longer exists
             return []
 
@@ -37,8 +35,6 @@ class LogParser:
                 new_lines = log_file.readlines()  # Read new lines
                 self.file_size = log_file.tell()  # Update file size for the next read
         except (FileNotFoundError, IOError):
-            # Handle potential I/O errors gracefully (e.g., file deleted or inaccessible)
-            print(f"Error reading the log file '{self.log_file_path}'. File might have been deleted or locked.")
             self.file_size = 0  # Reset the size to start over next time
 
         return new_lines
