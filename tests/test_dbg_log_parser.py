@@ -25,14 +25,14 @@ class TestDBGLogParser(unittest.TestCase):
         if os.path.exists(self.log_file_path):
             os.remove(self.log_file_path)
 
-    def test_read_full_log(self):
+    def test_parse_log(self):
         """
         Test that the parser can correctly read and extract information from the dbg.txt.
         """
-        server_name, player_name, zone_name = self.parser.read_full_log()
-        self.assertEqual(server_name, "P1999Green")
-        self.assertEqual(player_name, "Jetdru")
-        self.assertEqual(zone_name, "The Ruins of Old Paineel")
+        self.parser.parse_log()
+        self.assertEqual(self.parser.server_name, "P1999Green")
+        self.assertEqual(self.parser.player_name, "Jetdru")
+        self.assertEqual(self.parser.zone_name, "The Ruins of Old Paineel")
 
     def test_server_switch(self):
         """
@@ -42,10 +42,10 @@ class TestDBGLogParser(unittest.TestCase):
             f.write("2024-09-22 11:20:00 WorldRPServer message: server name P1999Blue\n")
             f.write("2024-09-22 11:20:10 Player = AnotherChar, zone = Nektulos Forest\n")
 
-        server_name, player_name, zone_name = self.parser.read_full_log()
-        self.assertEqual(server_name, "P1999Blue")
-        self.assertEqual(player_name, "AnotherChar")
-        self.assertEqual(zone_name, "Nektulos Forest")
+        self.parser.parse_log()
+        self.assertEqual(self.parser.server_name, "P1999Blue")
+        self.assertEqual(self.parser.player_name, "AnotherChar")
+        self.assertEqual(self.parser.zone_name, "Nektulos Forest")
 
     def test_player_logout_and_relogin(self):
         """
@@ -55,9 +55,9 @@ class TestDBGLogParser(unittest.TestCase):
             f.write("*** EXITING: I have completed camping\n")
             f.write("2024-09-22 11:21:00 Player = NewPlayer, zone = Qeynos\n")
 
-        server_name, player_name, zone_name = self.parser.read_full_log()
-        self.assertEqual(player_name, "NewPlayer")
-        self.assertEqual(zone_name, "Qeynos")
+        self.parser.parse_log()
+        self.assertEqual(self.parser.player_name, "NewPlayer")
+        self.assertEqual(self.parser.zone_name, "Qeynos")
 
     def test_multiple_logins(self):
         """
@@ -66,9 +66,21 @@ class TestDBGLogParser(unittest.TestCase):
         with open(self.log_file_path, 'a') as f:
             f.write("2024-09-22 11:22:00 Player = YetAnotherPlayer, zone = Misty Thicket\n")
 
-        server_name, player_name, zone_name = self.parser.read_full_log()
-        self.assertEqual(player_name, "YetAnotherPlayer")
-        self.assertEqual(zone_name, "Misty Thicket")
+        self.parser.parse_log()
+        self.assertEqual(self.parser.player_name, "YetAnotherPlayer")
+        self.assertEqual(self.parser.zone_name, "Misty Thicket")
+
+    def test_character_logout(self):
+        """
+        Test that the parser detects a character logout and resets player and zone names.
+        """
+        with open(self.log_file_path, 'a') as f:
+            f.write("*** DISCONNECTING: Quit command received\n")
+
+        self.parser.parse_log()
+        self.assertIsNone(self.parser.player_name)
+        self.assertIsNone(self.parser.zone_name)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -4,64 +4,40 @@ from src.parsers.log_parser import LogParser
 
 class DBGLogParser(LogParser):
     """
-    A class for parsing the dbg.txt file to extract server, player, and zone information.
-    Handles dynamic EverQuest sessions and resets.
+    Parses the EverQuest dbg.txt file to extract server, player, and zone information dynamically.
+    Continuously monitors the file for real-time changes in game state.
     """
 
-    def __init__(self, log_file_path):
+    def __init__(self, log_file_path: str) -> None:
         super().__init__(log_file_path)
         self.server_name = None
         self.player_name = None
         self.zone_name = None
 
-    def read_full_log(self):
+    def parse_log(self) -> None:
         """
-        Always read the dbg.txt from the start to ensure we don't miss any important data.
+        The required method from the parent LogParser class.
+        This method processes the log to extract relevant information about the game session.
         """
-        lines = self.read_lines()
-
-        # Reset values before each parsing
-        self.server_name = None
-        self.player_name = None
-        self.zone_name = None
-
+        self.reset_log_state()  # Clear previous log data
+        lines = self.read_log()  # Read the entire log
         for line in lines:
-            # Match the server name
-            server_match = re.search(r"WorldRPServer\s+message:\s+server\s+name\s+(\w+)", line)
-            if server_match:
-                self.server_name = server_match.group(1)
+            self.extract_info(line)  # Extract relevant info from each line
 
-            # Match the player and zone info
-            player_match = re.search(r"Player\s*=\s*(\w+),\s*zone\s*=\s*([\w\s]+)", line)
-            if player_match:
-                self.player_name = player_match.group(1).strip()  # Strip any newlines or extra spaces
-                self.zone_name = player_match.group(2).strip()  # Strip any newlines or extra spaces
+    def extract_info(self, line: str) -> None:
+        """
+        Parse an individual line to extract server, player, and zone information.
+        """
+        # Detect server
+        server_match = re.search(r"WorldRPServer\s+message:\s+server\s+name\s+(\w+)", line)
+        if server_match:
+            self.server_name = server_match.group(1)
 
-        return self.server_name, self.player_name, self.zone_name
-
-    def monitor(self):
-        """
-        Monitors the dbg.txt file for events in real-time (character login, logout, server switch).
-        Continuously reads the file to track live updates.
-        """
-        last_seen_player = None
-        while True:
-            new_lines = self.read_lines()
-            if new_lines:
-                for line in new_lines:
-                    self.parse_line(line, last_seen_player)
-            time.sleep(1)  # Monitor the file continuously for new updates
-
-    def parse_line(self, line, last_seen_player):
-        """
-        Parse individual lines and manage session activity, including switching characters.
-        """
-        # Detect a new EverQuest session (start of a new session)
-        if "Starting EverQuest" in line:
-            print("New EverQuest session detected.")
-            self.server_name = None
-            self.player_name = None
-            self.zone_name = None
+        # Detect player and zone
+        player_match = re.search(r"Player\s*=\s*(\w+),\s*zone\s*=\s*([\w\s]+)", line)
+        if player_match:
+            self.player_name = player_match.group(1)
+            self.zone_name = player_match.group(2).strip()  # Strip trailing spaces/newlines
 
         # Detect logout of a character (e.g., camping or quitting)
         if "*** EXITING: I have completed camping" in line or "*** DISCONNECTING: Quit command received" in line:
@@ -69,17 +45,12 @@ class DBGLogParser(LogParser):
             self.player_name = None
             self.zone_name = None
 
-        # Detect the current player and server
-        server_match = re.search(r"WorldRPServer\s+message:\s+server\s+name\s+(\w+)", line)
-        if server_match:
-            self.server_name = server_match.group(1)
-
-        player_match = re.search(r"Player\s*=\s*(\w+),\s*zone\s*=\s*([\w\s]+)", line)
-        if player_match:
-            self.player_name = player_match.group(1).strip()  # Strip any newlines or extra spaces
-            self.zone_name = player_match.group(2).strip()  # Strip any newlines or extra spaces
-
-        # Handle character switching
-        if self.player_name != last_seen_player:
-            print(f"Switching to character {self.player_name} on server {self.server_name}")
-            last_seen_player = self.player_name
+    def monitor_log(self) -> None:
+        """
+        Continuously monitor the dbg.txt file for real-time events (character login, logout, server switch).
+        """
+        while True:
+            new_lines = self.read_log()
+            for line in new_lines:
+                self.extract_info(line)
+            time.sleep(1)  # Poll every second

@@ -1,40 +1,61 @@
-import os
+from typing import List
+from src.utils.file_handler import FileHandler
 
 class LogParser:
     """
-    Base class for handling log file operations with dynamic and stateless behavior.
+    A general-purpose log parser that focuses on log-specific tasks while delegating file operations.
     """
-    def __init__(self, log_file_path):
-        self.log_file_path = log_file_path
-        self.file_size = 0  # Track the size of the file to detect new data and handle truncation
+    def __init__(self, log_file_path: str) -> None:
+        self.file_handler = FileHandler(log_file_path)
+        self.current_log = []  # Store all lines read from the log file
 
-    def file_exists(self):
+    def read_log(self) -> List[str]:
         """
-        Check if the log file exists and is accessible.
+        Read new lines from the log file and update the current log.
+        Check if the file exists before reading.
         """
-        return os.path.exists(self.log_file_path)
-
-    def read_lines(self):
-        """
-        Read new lines from the log file, handling dynamic user actions (truncation, renaming, deletion).
-        """
-        if not self.file_exists():
-            self.file_size = 0  # Reset the size since the file no longer exists
+        if not self.file_handler.file_exists():
+            self.log_error(f"File {self.file_handler.file_path} does not exist.")
             return []
 
-        current_size = os.path.getsize(self.log_file_path)
-
-        # If the file was truncated or replaced, reset and read from the start
-        if current_size < self.file_size:
-            self.file_size = 0
-
-        new_lines = []
-        try:
-            with open(self.log_file_path, 'r') as log_file:
-                log_file.seek(self.file_size)  # Move to the last read position
-                new_lines = log_file.readlines()  # Read new lines
-                self.file_size = log_file.tell()  # Update file size for the next read
-        except (FileNotFoundError, IOError):
-            self.file_size = 0  # Reset the size to start over next time
-
+        new_lines = self.file_handler.read_lines()
+        self.current_log.extend(new_lines)
         return new_lines
+
+    def reset_log_state(self) -> None:
+        """
+        Reset the state of the log parser, clearing any stored data.
+        Useful when switching characters or servers.
+        """
+        self.current_log = []
+
+    def is_log_empty(self) -> bool:
+        """
+        Check if the log file is empty, indicating no data to process.
+        """
+        return len(self.current_log) == 0
+
+    def get_full_log(self) -> List[str]:
+        """
+        Return the full log read so far.
+        """
+        return self.current_log
+
+    def log_error(self, message: str) -> None:
+        """
+        Log any errors or events. Could be extended to write to a file or log system.
+        """
+        print(f"ERROR: {message}")
+
+    def filter_log(self, pattern: str) -> List[str]:
+        """
+        Filter the current log based on a pattern (e.g., regex) and return the matching lines.
+        """
+        filtered_lines = [line for line in self.current_log if re.search(pattern, line)]
+        return filtered_lines
+
+    def parse_log(self):
+        """
+        Abstract method to be implemented by subclasses for specific log parsing.
+        """
+        raise NotImplementedError("This method should be implemented by a subclass")
