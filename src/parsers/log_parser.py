@@ -1,3 +1,4 @@
+import re
 from typing import List
 from src.utils.file_handler import FileHandler
 
@@ -41,7 +42,8 @@ class LogParser:
         """
         return self.current_log
 
-    def log_error(self, message: str) -> None:
+    @staticmethod
+    def log_error(message: str) -> None:
         """
         Log any errors or events. Could be extended to write to a file or log system.
         """
