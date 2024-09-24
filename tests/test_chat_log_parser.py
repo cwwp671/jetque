@@ -1,96 +1,67 @@
 import unittest
-import os
-from src.parsers.chat_log_parser import ChatLogParser, CombatEvent
+from unittest.mock import MagicMock
+from src.parsers.chat_log_parser import ChatLogParser
+from src.events.event_factory import EventFactory
+from src.events.event_handler import EventHandler
+
 
 class TestChatLogParser(unittest.TestCase):
 
     def setUp(self):
-        """
-        Create a temporary chat log file for testing purposes.
-        """
-        self.log_file_path = 'test_chat_log.txt'
-        self.parser = ChatLogParser(self.log_file_path)
-        self.initial_content = (
-            "You crush a goblin for 55 points of damage.\n"
-            "A goblin slashes YOU for 30 points of damage.\n"
-        )
-        with open(self.log_file_path, 'w') as f:
-            f.write(self.initial_content)
+        self.event_factory = MagicMock(EventFactory)
+        self.event_handler = MagicMock(EventHandler)
+        self.chat_log_parser = ChatLogParser("fake_log_path", self.event_handler, self.event_factory)
 
-    def tearDown(self):
+    def simulate_log_parsing(self, log_lines):
         """
-        Clean up the temporary chat log file after each test.
+        Helper method to simulate reading the log lines and parsing them.
         """
-        if os.path.exists(self.log_file_path):
-            os.remove(self.log_file_path)
+        self.chat_log_parser.read_log = MagicMock(return_value=log_lines)
+        self.chat_log_parser.parse_log()
 
-    def test_parse_outgoing_combat_event(self):
+    def assert_event_factory_called_with(self, log_line):
         """
-        Test that the parser can correctly generate an outgoing combat event.
+        Helper method to check if the event factory was called with the correct log line.
         """
-        self.parser.parse_log()
-        self.assertEqual(len(self.parser.events), 2)
-        event = self.parser.events[0]
-        self.assertIsInstance(event, CombatEvent)
-        self.assertEqual(event.event_type, 'outgoing')
-        self.assertEqual(event.damage_type, 'crush')
-        self.assertEqual(event.source, 'Player')
-        self.assertEqual(event.target, 'a goblin')
-        self.assertEqual(event.damage_value, 55)
+        self.event_factory.create_event_from_line.assert_called_once_with(log_line)
 
-    def test_parse_incoming_combat_event(self):
-        """
-        Test that the parser can correctly generate an incoming combat event.
-        """
-        self.parser.parse_log()
-        self.assertEqual(len(self.parser.events), 2)
-        event = self.parser.events[1]
-        self.assertIsInstance(event, CombatEvent)
-        self.assertEqual(event.event_type, 'incoming')
-        self.assertEqual(event.damage_type, 'slashes')
-        self.assertEqual(event.source.lower(), 'a goblin')  # Compare lowercase to ignore case sensitivity
-        self.assertEqual(event.target, 'Player')
-        self.assertEqual(event.damage_value, 30)
+    def test_event_parsing(self):
+        cases = [
+            {'log_line': "You crush a goblin for 50 points of damage.", 'description': 'Outgoing Combat'},
+            {'log_line': "You backstab a rat for 60 points of damage.", 'description': 'Outgoing Skill'},
+            {'log_line': "You try to crush a goblin, but the goblin dodges!", 'description': 'Outgoing Avoidance'},
+            {'log_line': "A goblin crushes YOU for 30 points of damage.", 'description': 'Incoming Combat'},
+            {'log_line': "A goblin backstabs YOU for 40 points of damage.", 'description': 'Incoming Skill'},
+            {'log_line': "A goblin tries to crush YOU, but YOU dodge!", 'description': 'Incoming Avoidance'},
+            {'log_line': "You say, 'Hello!'", 'description': 'Irrelevant'}
+        ]
 
-    def test_safe_int_conversion(self):
-        """
-        Test that the parser can safely convert strings to integers and handle invalid data.
-        """
-        valid_value = self.parser.safe_int("123")
-        invalid_value = self.parser.safe_int("invalid")
+        for case in cases:
+            with self.subTest(case=case):
+                log_lines = [case['log_line']]
 
-        self.assertEqual(valid_value, 123)
-        self.assertEqual(invalid_value, 0)
+                # Set up the mock to return None or a mock event, depending on the case
+                if case['description'] == 'Irrelevant':
+                    self.event_factory.create_event_from_line.return_value = None
+                else:
+                    self.event_factory.create_event_from_line.return_value = MagicMock()
 
-    def test_no_combat_events(self):
-        """
-        Test that the parser handles an empty or unrelated log file without errors.
-        """
-        with open(self.log_file_path, 'w') as f:
-            f.write("This is not a combat log entry.\n")
+                self.simulate_log_parsing(log_lines)
 
-        self.parser.parse_log()
-        self.assertEqual(len(self.parser.events), 0)
+                # Check if the event factory was called with the correct log line
+                self.assert_event_factory_called_with(case['log_line'])
 
-    def test_multiple_combat_events(self):
-        """
-        Test that the parser handles multiple combat events in sequence.
-        """
-        additional_content = (
-            "You punch a bat for 40 points of damage.\n"
-            "A bat bites YOU for 25 points of damage.\n"
-        )
-        with open(self.log_file_path, 'a') as f:
-            f.write(additional_content)
+                if case['description'] == 'Irrelevant':
+                    # Ensure no event was added to the handler for irrelevant lines
+                    self.event_handler.add_event.assert_not_called()
+                else:
+                    # Ensure the event was added to the handler for relevant lines
+                    self.event_handler.add_event.assert_called_once()
 
-        self.parser.parse_log()
-        self.assertEqual(len(self.parser.events), 4)
-        first_event = self.parser.events[2]
-        self.assertEqual(first_event.event_type, 'outgoing')
-        self.assertEqual(first_event.damage_type, 'punch')
-        self.assertEqual(first_event.source, 'Player')
-        self.assertEqual(first_event.target, 'a bat')
-        self.assertEqual(first_event.damage_value, 40)
+                # Reset mocks between tests
+                self.event_factory.reset_mock()
+                self.event_handler.reset_mock()
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,11 +1,12 @@
 import re
 from src.parsers.log_parser import LogParser
+from src.events.event_factory import EventFactory
 from src.events.event_handler import EventHandler
 
 
 class ChatLogParser(LogParser):
     """
-    A class for parsing chat log files and forwarding relevant events to the event handler.
+    A class for parsing chat log files and forwarding relevant log lines to the event factory.
     """
 
     COMBAT = (
@@ -27,9 +28,10 @@ class ChatLogParser(LogParser):
         rf'(\w+(\s\w+)?) tries to ({COMBAT}|{SKILL}) YOU, but YOU ({AVOIDANCE})!'
     )
 
-    def __init__(self, log_file_path: str, event_handler: EventHandler) -> None:
+    def __init__(self, log_file_path: str, event_handler: EventHandler, event_factory: EventFactory) -> None:
         super().__init__(log_file_path)
-        self.event_handler = event_handler  # Delegate event handling
+        self.event_handler = event_handler
+        self.event_factory = event_factory
 
     def parse_log(self) -> None:
         """
@@ -43,20 +45,13 @@ class ChatLogParser(LogParser):
 
     def parse_event_line(self, line: str) -> None:
         """
-        Identify if a log line contains a relevant event and forward it to the event handler.
+        Identify a log line and send it to the event factory, which creates the event.
+        The created event is then sent to the event handler.
         """
-        if self.OUTGOING_COMBAT.search(line):
-            self.event_handler.parse_event_line(line, 'outgoing_combat')
-        elif self.OUTGOING_SKILL.search(line):
-            self.event_handler.parse_event_line(line, 'outgoing_skill')
-        elif self.OUTGOING_AVOIDANCE.search(line):
-            self.event_handler.parse_event_line(line, 'outgoing_avoidance')
-        elif self.INCOMING_COMBAT.search(line):
-            self.event_handler.parse_event_line(line, 'incoming_combat')
-        elif self.INCOMING_SKILL.search(line):
-            self.event_handler.parse_event_line(line, 'incoming_skill')
-        elif self.INCOMING_AVOIDANCE.search(line):
-            self.event_handler.parse_event_line(line, 'incoming_avoidance')
+        event = self.event_factory.create_event_from_line(line)  # Factory handles type determination
+
+        if event:
+            self.event_handler.add_event(event)
 
     def monitor_log(self) -> None:
         """

@@ -9,29 +9,11 @@ class EventHandler:
     def __init__(self) -> None:
         self.event_queue = []
 
-    def parse_event_line(self, line: str, event_type: str) -> None:
+    def add_event(self, event: Event) -> None:
         """
-        Process log line and create events based on type.
+        Add an event to the event queue.
         """
-        if event_type == 'outgoing_combat':
-            # Parse and create a CombatEvent (example parsing shown, real parsing would be done with regex)
-            self.create_event(CombatEvent, 'outgoing', 'combat', 'Player', 'Monster', 100)
-        elif event_type == 'outgoing_skill':
-            # Handle skill event creation here
-            pass
-        elif event_type == 'outgoing_avoidance':
-            # Handle avoidance event creation here
-            pass
-        # Add other event types as necessary
-
-    def create_event(self, event_class, event_category: str,
-                     event_type: str, source: str, target: str, damage_value: int) -> None:
-        """
-        Create an event and add it to the queue.
-        """
-        event = event_class(event_category, event_type, source, target, damage_value)
         self.event_queue.append(event)
-        print(f"Event created: {event}")
 
     def process_event_queue(self) -> None:
         """
