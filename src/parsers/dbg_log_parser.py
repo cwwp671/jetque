@@ -33,6 +33,7 @@ class DBGLogParser(LogParser):
         new_lines = self.read_log()
         # logging.debug(f"New lines read: {len(new_lines)}")
         for line in new_lines:
+            line = line.strip()
             logging.debug(f"New line: {line}")
             self.extract_info(line)
 

@@ -32,7 +32,8 @@ class ChatLogParser(LogParser):
         new_lines = self.read_log()
         # logging.debug(f"New lines read: {len(new_lines)}")
         for line in new_lines:
-            logging.debug(f"New line: {line}")
+            line = line.strip()
+            # logging.debug(f"New line: {line}")
             self.parse_event_line(line)
 
     def parse_event_line(self, line: str) -> None:
