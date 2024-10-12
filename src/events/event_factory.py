@@ -1,4 +1,7 @@
+# jetque/src/parsers/event_factory.py
+
 import re
+import logging
 from src.events.event import CombatEvent, SkillEvent, AvoidanceEvent
 
 class EventFactory:
@@ -13,13 +16,25 @@ class EventFactory:
     SKILL = r'backstab(?:s)?|kick(?:s)?|bash(?:es)?|strike(?:s)?'
     AVOIDANCE = r'dodge(?:s)?|block(?:s)?|parr(?:y|ies)|riposte(?:s)?|miss(?:es)?|magical skin absorbs the blow'
 
-    OUTGOING_COMBAT = re.compile(rf'You ({COMBAT}) (\w+(\s\w+)?) for (\d+) points? of damage.')
-    OUTGOING_SKILL = re.compile(rf'You ({SKILL}) (\w+(\s\w+)?) for (\d+) points? of damage.')
-    OUTGOING_AVOIDANCE = re.compile(rf'You try to ({COMBAT}|{SKILL}) (\w+(\s\w+)?), but (\w+(\s\w+)?) ({AVOIDANCE})!')
+    OUTGOING_COMBAT = re.compile(
+        rf'You (?P<action>{COMBAT}) (?P<target>[\w\s]+?) for (?P<damage>\d+) points? of damage\.'
+    )
+    OUTGOING_SKILL = re.compile(
+        rf'You (?P<action>{SKILL}) (?P<target>[\w\s]+?) for (?P<damage>\d+) points? of damage\.'
+    )
+    OUTGOING_AVOIDANCE = re.compile(
+        rf'You try to (?P<action>{COMBAT}|{SKILL}) (?P<target>[\w\s]+?), but(?: (?P<entity>[\w\s\']+?))? (?P<avoidance>{AVOIDANCE})!'
+    )
 
-    INCOMING_COMBAT = re.compile(rf'(\w+(\s\w+)?) ({COMBAT}) YOU for (\d+) points? of damage.')
-    INCOMING_SKILL = re.compile(rf'(\w+(\s\w+)?) ({SKILL}) YOU for (\d+) points? of damage.')
-    INCOMING_AVOIDANCE = re.compile(rf'(\w+(\s\w+)?) tries to ({COMBAT}|{SKILL}) YOU, but YOU ({AVOIDANCE})!')
+    INCOMING_COMBAT = re.compile(
+        rf'(?P<entity>[\w\s]+?) (?P<action>{COMBAT}) YOU for (?P<damage>\d+) points? of damage\.'
+    )
+    INCOMING_SKILL = re.compile(
+        rf'(?P<entity>[\w\s]+?) (?P<action>{SKILL}) YOU for (?P<damage>\d+) points? of damage\.'
+    )
+    INCOMING_AVOIDANCE = re.compile(
+        rf'(?P<entity>[\w\s\']+?) tries to (?P<action>{COMBAT}|{SKILL}) YOU, but(?: YOU)? (?P<avoidance>{AVOIDANCE})!'
+    )
 
     @staticmethod
     def create_event_from_line(line: str):
@@ -27,44 +42,71 @@ class EventFactory:
         Create the appropriate event based on the log line.
         Uses regex to identify event types and instantiate the corresponding event class.
         """
-
         # Outgoing Combat
         match = EventFactory.OUTGOING_COMBAT.search(line)
         if match:
-            return CombatEvent('outgoing', 'Player', match.group(2), int(match.group(4)))
+            logging.debug(f"Outgoing combat match: {line}")
+            return CombatEvent(
+                'outgoing',
+                'Player',
+                match.group('target'),
+                int(match.group('damage'))
+            )
 
         # Outgoing Skill
         match = EventFactory.OUTGOING_SKILL.search(line)
         if match:
-            return SkillEvent('outgoing', 'Player', match.group(2), int(match.group(4)))
+            logging.debug(f"Outgoing skill match: {line}")
+            return SkillEvent(
+                'outgoing',
+                'Player',
+                match.group('target'),
+                int(match.group('damage'))
+            )
 
         # Outgoing Avoidance
         match = EventFactory.OUTGOING_AVOIDANCE.search(line)
         if match:
-            return AvoidanceEvent('outgoing', 'Player', match.group(2))
+            logging.debug(f"Outgoing avoidance match: {line}")
+            return AvoidanceEvent(
+                'outgoing',
+                'Player',
+                match.group('target')
+            )
 
         # Incoming Combat
         match = EventFactory.INCOMING_COMBAT.search(line)
         if match:
-            entity_name = match.group(1)
-            if line.startswith(entity_name.capitalize()):
-                entity_name = entity_name.capitalize()
-            return CombatEvent('incoming', entity_name, 'Player', int(match.group(4)))
+            entity_name = match.group('entity').capitalize()
+            logging.debug(f"Incoming combat match: {line}")
+            return CombatEvent(
+                'incoming',
+                entity_name,
+                'Player',
+                int(match.group('damage'))
+            )
 
         # Incoming Skill
         match = EventFactory.INCOMING_SKILL.search(line)
         if match:
-            entity_name = match.group(1)
-            if line.startswith(entity_name.capitalize()):
-                entity_name = entity_name.capitalize()
-            return SkillEvent('incoming', entity_name, 'Player', int(match.group(4)))
+            entity_name = match.group('entity').capitalize()
+            logging.debug(f"Incoming skill match: {line}")
+            return SkillEvent(
+                'incoming',
+                entity_name,
+                'Player',
+                int(match.group('damage'))
+            )
 
         # Incoming Avoidance
         match = EventFactory.INCOMING_AVOIDANCE.search(line)
         if match:
-            entity_name = match.group(1)
-            if line.startswith(entity_name.capitalize()):
-                entity_name = entity_name.capitalize()
-            return AvoidanceEvent('incoming', entity_name, 'Player')
+            entity_name = match.group('entity').capitalize()
+            logging.debug(f"Incoming avoidance match: {line}")
+            return AvoidanceEvent(
+                'incoming',
+                entity_name,
+                'Player'
+            )
 
         return None

@@ -1,63 +1,59 @@
-import re
+# jetque/src/parsers/log_parser.py
+
+import logging
+from PyQt6.QtCore import QObject, QTimer
 from typing import List
 from src.utils.file_handler import FileHandler
+from config.config_loader import load_config
 
-class LogParser:
+class LogParser(QObject):
     """
     A general-purpose log parser that focuses on log-specific tasks while delegating file operations.
     """
-    def __init__(self, log_file_path: str) -> None:
+    def __init__(self, log_file_path: str, default_interval: int) -> None:
+        logging.debug("Here")
+        super().__init__()
         self.file_handler = FileHandler(log_file_path)
-        self.current_log = []  # Store all lines read from the log file
+        self.is_running = False
+        self.config = load_config()
+        self.timer = QTimer()
+        self.set_timer_interval(default_interval)
+
+    def set_timer_interval(self, default_interval: int) -> None:
+        """Sets the interval of the timer based on the config or default."""
+        logging.debug("Here")
+        raise NotImplementedError("This method should be implemented by subclasses")
 
     def read_log(self) -> List[str]:
         """
-        Read new lines from the log file and update the current log.
-        Check if the file exists before reading.
+        Read new lines from the log file using FileHandler.
+        Only new lines should be processed.
         """
-        if not self.file_handler.file_exists():
-            self.log_error(f"File {self.file_handler.file_path} does not exist.")
-            return []
+        # logging.debug("Here")
+        return self.file_handler.read_lines()
 
-        new_lines = self.file_handler.read_lines()
-        self.current_log.extend(new_lines)
-        return new_lines
+    def monitor_log(self) -> None:
+        """
+        Continuously monitor the log file for changes and parse new lines.
+        This is now the general monitor logic used across parsers unless a specific parser requires different behavior.
+        """
+        logging.debug("Here")
+        self.is_running = True
+        self.file_handler.initialize_position()
+        logging.debug(f"monitoring at file position: {self.file_handler.file_size}")
+        self.timer.timeout.connect(self.process_log)
+        logging.debug("Timer connected to process_log")
+        self.timer.start()
+        logging.debug(f"Timer started with interval: {self.timer.interval()} ms")
 
-    def reset_log_state(self) -> None:
-        """
-        Reset the state of the log parser, clearing any stored data.
-        Useful when switching characters or servers.
-        """
-        self.current_log = []
+    def process_log(self) -> None:
+        """Processes new log lines."""
+        logging.debug("Here")
+        raise NotImplementedError("This method should be implemented by subclasses")
 
-    def is_log_empty(self) -> bool:
-        """
-        Check if the log file is empty, indicating no data to process.
-        """
-        return len(self.current_log) == 0
-
-    def get_full_log(self) -> List[str]:
-        """
-        Return the full log read so far.
-        """
-        return self.current_log
-
-    @staticmethod
-    def log_error(message: str) -> None:
-        """
-        Log any errors or events. Could be extended to write to a file or log system.
-        """
-        print(f"ERROR: {message}")
-
-    def filter_log(self, pattern: str) -> List[str]:
-        """
-        Filter the current log based on a pattern (e.g., regex) and return the matching lines.
-        """
-        filtered_lines = [line for line in self.current_log if re.search(pattern, line)]
-        return filtered_lines
-
-    def parse_log(self):
-        """
-        Abstract method to be implemented by subclasses for specific log parsing.
-        """
-        raise NotImplementedError("This method should be implemented by a subclass")
+    def stop_monitoring(self) -> None:
+        """Stop monitoring the log file."""
+        logging.debug("Here")
+        self.is_running = False
+        self.timer.stop()
+        logging.debug(f"Stopped monitoring at file position: {self.file_handler.file_size}")

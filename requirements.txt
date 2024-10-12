@@ -1,0 +1,5 @@
+glfw
+pygame==2.6.1
+numpy
+PyQt5
+PyQt6

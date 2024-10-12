@@ -1,7 +1,66 @@
 {
-  "log_directory": "C:/Everquest/Logs",
-  "dbg_file": "dbg.txt",
-  "check_interval": 1,
-  "auto_archive": true,
-  "archive_size_limit_mb": 100
+    "log_directory": "C:/Everquest/Logs",
+    "dbg_file": "C:/Everquest/Logs/dbg.txt",
+    "char_file": "C:/Everquest/Logs/eqlog_Lifealerts_P1999Green.txt",
+    "chat_log_timer": 5,
+    "dbg_log_timer": 1000,
+    "check_interval": 1,
+    "auto_archive": true,
+    "archive_size_limit_mb": 100,
+    "scroll_areas": {
+        "incoming": {
+            "position": [
+                0.2,
+                0.2
+            ],
+            "width": 300,
+            "height": 200,
+            "default_animation": "parabola"
+        },
+        "outgoing": {
+            "position": [
+                0.8,
+                0.2
+            ],
+            "width": 300,
+            "height": 200,
+            "default_animation": "parabola"
+        },
+        "notifications": {
+            "position": [
+                0.5,
+                0.9
+            ],
+            "width": 400,
+            "height": 100,
+            "default_animation": "static"
+        }
+    },
+    "font": {
+        "default_font": "Arial",
+        "font_size": 16,
+        "text_color": {
+            "incoming_combat": [
+                1,
+                0,
+                0
+            ],
+            "outgoing_combat": [
+                1,
+                1,
+                1
+            ],
+            "skills": [
+                1,
+                1,
+                0
+            ],
+            "avoidance": [
+                1,
+                1,
+                1
+            ]
+        }
+    },
+    "animation_speed": 1.0
 }
