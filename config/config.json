@@ -7,6 +7,65 @@
     "check_interval": 1,
     "auto_archive": true,
     "archive_size_limit_mb": 100,
+    "overlays": {
+        "Incoming": {
+            "position": [
+                0,
+                0
+            ],
+            "width": 300,
+            "height": 200,
+            "config": {
+                "text": {
+                    "color": "red",
+                    "font": "Arial",
+                    "size": 18,
+                    "animation": {
+                        "fps": 60,
+                        "ms_per_frame": 16
+                    }
+                }
+            }
+        },
+        "Outgoing": {
+            "position": [
+                0,
+                0
+            ],
+            "width": 300,
+            "height": 200,
+            "config": {
+                "text": {
+                    "color": "white",
+                    "font": "Arial",
+                    "size": 18,
+                    "animation": {
+                        "fps": 60,
+                        "ms_per_frame": 16
+                    }
+                }
+            }
+        },
+        "Notifications": {
+            "position": [
+                0,
+                0
+            ],
+            "width": 400,
+            "height": 100,
+            "config": {
+                "text": {
+                    "color": "yellow",
+                    "font": "Arial",
+                    "size": 18,
+                    "animation": {
+                        "fps": 60,
+                        "ms_per_frame": 16
+                    }
+                }
+            }
+        }
+    },
     "scroll_areas": {
         "incoming": {
             "position": [

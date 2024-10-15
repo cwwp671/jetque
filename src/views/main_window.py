@@ -8,10 +8,12 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from pathlib import Path
-from .system_tray import SystemTrayIcon
-from .home_view import HomeView
-from .overlays_view import OverlaysView
-from .triggers_view import TriggersView
+
+from src.overlays.overlay_manager import OverlayManager
+from src.views.system_tray import SystemTrayIcon
+from src.views.home_view import HomeView
+from src.views.overlays_view import OverlaysView
+from src.views.triggers_view import TriggersView
 from src.parsers.chat_log_parser import ChatLogParser
 from src.parsers.dbg_log_parser import DBGLogParser
 from src.events.event_handler import EventHandler
@@ -20,10 +22,11 @@ from src.events.event_factory import EventFactory
 class ChatLogParsingThread(QThread):
     new_event_signal = pyqtSignal(str)
 
-    def __init__(self, log_file_path):
+    def __init__(self, log_file_path, event_handler):
         logging.debug("Here")
         super().__init__()
         self.log_file_path = log_file_path
+        self.event_handler = event_handler
         self.is_running = False
         self.chat_log_parser = None
 
@@ -31,7 +34,7 @@ class ChatLogParsingThread(QThread):
         """Start monitoring the log using the existing timer in ChatLogParser."""
         logging.debug("Here")
         self.is_running = True
-        self.chat_log_parser = ChatLogParser(self.log_file_path, EventHandler(), EventFactory())
+        self.chat_log_parser = ChatLogParser(self.log_file_path, self.event_handler, EventFactory())
         self.chat_log_parser.monitor_log()  # This will start the parser's own timer
         self.exec()
 
@@ -77,10 +80,14 @@ class MainWindow(QMainWindow):
         self.setGeometry(100, 100, 800, 600)
         self.chat_log_thread = None
         self.dbg_log_thread = None
+        self.overlay_manager = OverlayManager()
+        self.event_handler = EventHandler()
         self.is_running = False
         self.setup_icon()
         self.setup_ui()
         self.setup_tray()
+        self.event_handler.incoming_event_signal.connect(self.handle_incoming_event)
+        self.event_handler.outgoing_event_signal.connect(self.handle_outgoing_event)
         self.setup_connections()
 
     def setup_icon(self):
@@ -107,7 +114,7 @@ class MainWindow(QMainWindow):
         self.home_view = HomeView()
         self.tabs.addTab(self.home_view, "Home")
 
-        self.overlays_view = OverlaysView()
+        self.overlays_view = OverlaysView(self.overlay_manager)
         self.tabs.addTab(self.overlays_view, "Overlays")
 
         self.triggers_view = TriggersView()
@@ -175,7 +182,7 @@ class MainWindow(QMainWindow):
             return
 
         # Start the chat log parser thread
-        self.chat_log_thread = ChatLogParsingThread(chat_log_file)
+        self.chat_log_thread = ChatLogParsingThread(chat_log_file, self.event_handler)
         self.chat_log_thread.new_event_signal.connect(self.handle_new_chat_event)
         self.chat_log_thread.start()
 
@@ -183,6 +190,12 @@ class MainWindow(QMainWindow):
         self.dbg_log_thread = DBGLogParsingThread(dbg_log_file)
         self.dbg_log_thread.dbg_info_signal.connect(self.handle_new_dbg_event)
         self.dbg_log_thread.start()
+
+    def handle_incoming_event(self, event):
+        self.overlay_manager.display_event('Incoming', event)
+
+    def handle_outgoing_event(self, event):
+        self.overlay_manager.display_event('Outgoing', event)
 
     def handle_new_chat_event(self, event: str):
         """Handle a new chat log event."""
