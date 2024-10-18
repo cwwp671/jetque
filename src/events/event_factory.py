@@ -114,7 +114,7 @@ class EventFactory:
             # Outgoing Combat
             match = EventFactory.OUTGOING_COMBAT.search(line)
             if match:
-                logging.debug(f"Outgoing combat match: {line}")
+                #logging.debug(f"Outgoing combat match: {line}")
                 action = EventFactory.normalize_action(match.group('action'))
                 return CombatEvent(
                     'outgoing',
@@ -127,7 +127,7 @@ class EventFactory:
             # Outgoing Skill
             match = EventFactory.OUTGOING_SKILL.search(line)
             if match:
-                logging.debug(f"Outgoing skill match: {line}")
+                #logging.debug(f"Outgoing skill match: {line}")
                 action = EventFactory.normalize_action(match.group('action'))
                 return SkillEvent(
                     'outgoing',
@@ -140,7 +140,7 @@ class EventFactory:
             # Outgoing Avoidance
             match = EventFactory.OUTGOING_AVOIDANCE.search(line)
             if match:
-                logging.debug(f"Outgoing avoidance match: {line}")
+                #logging.debug(f"Outgoing avoidance match: {line}")
                 action = EventFactory.normalize_action(match.group('action'))
                 avoidance = match.group('avoidance')
                 normalized_avoidance = EventFactory.normalize_action(avoidance)
@@ -160,7 +160,7 @@ class EventFactory:
                     entity_name = entity.lower()
                 else:
                     entity_name = entity
-                logging.debug(f"Incoming combat match: {line}")
+                #logging.debug(f"Incoming combat match: {line}")
                 action = EventFactory.normalize_action(match.group('action'))
                 return CombatEvent(
                     'incoming',
@@ -178,7 +178,7 @@ class EventFactory:
                     entity_name = entity.lower()
                 else:
                     entity_name = entity
-                logging.debug(f"Incoming skill match: {line}")
+                #logging.debug(f"Incoming skill match: {line}")
                 action = EventFactory.normalize_action(match.group('action'))
                 return SkillEvent(
                     'incoming',
@@ -196,7 +196,7 @@ class EventFactory:
                     entity_name = entity.lower()
                 else:
                     entity_name = entity
-                logging.debug(f"Incoming avoidance match: {line}")
+                #logging.debug(f"Incoming avoidance match: {line}")
                 action = EventFactory.normalize_action(match.group('action'))
                 avoidance = match.group('avoidance')
                 normalized_avoidance = EventFactory.normalize_action(avoidance)
@@ -208,7 +208,7 @@ class EventFactory:
                     normalized_avoidance
                 )
 
-            logging.debug(f"No matching event found for line: {line}")
+            #logging.debug(f"No matching event found for line: {line}")
             return None
 
         except Exception as e:

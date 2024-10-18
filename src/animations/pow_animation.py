@@ -1,11 +1,10 @@
-# animation/pow_animation.py
+# jetque/src/animations/pow_animation.py
+
 import logging
 import random
-
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QGraphicsOpacityEffect
 from src.animations.animation import Animation
-
 
 class PowAnimation(Animation):
     """Implements Pow animation with scaling, display, and fade out."""

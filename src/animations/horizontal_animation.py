@@ -1,8 +1,7 @@
-# animation/horizontal_animation.py
+# jetque/src/animations/horizontal_animation.py
+
 import logging
-
 from src.animations.animation import Animation
-
 
 class HorizontalAnimation(Animation):
     """Implements horizontal animation."""

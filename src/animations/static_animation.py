@@ -1,8 +1,7 @@
-# animation/static_animation.py
+# jetque/src/animations/static_animation.py
+
 import logging
-
 from src.animations.animation import Animation
-
 
 class StaticAnimation(Animation):
     """Implements static animation."""

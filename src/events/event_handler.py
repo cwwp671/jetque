@@ -14,14 +14,14 @@ class EventHandler(QObject):
 
     def __init__(self):
         super().__init__()
-        logging.debug("Initializing EventHandler")
+        # logging.debug("Initializing EventHandler")
         self.event_queue = []
 
     def add_event(self, event: Event) -> None:
         """
         Add an event to the event queue.
         """
-        logging.debug(f"Adding event to queue: {event}")
+        # logging.debug(f"Adding event to queue: {event}")
         self.event_queue.append(event)
         self.process_event_queue()
 
@@ -29,7 +29,7 @@ class EventHandler(QObject):
         """
         Process and dispatch events from the queue.
         """
-        logging.debug("Processing event queue")
+        # logging.debug("Processing event queue")
         if self.event_queue:
             event = self.event_queue.pop(0)
             logging.debug(f"Dispatching event: {event}")
@@ -39,7 +39,7 @@ class EventHandler(QObject):
         """
         Dispatch event by emitting signals.
         """
-        logging.debug(f"Dispatching event: {event}")
+        # logging.debug(f"Dispatching event: {event}")
         if event.event_category == 'incoming':
             self.incoming_event_signal.emit(event)
         elif event.event_category == 'outgoing':

@@ -1,4 +1,5 @@
-# animation/animation_factory.py
+# jetque/src/animations/animation_factory.py
+
 from src.animations.animation import Animation
 from src.animations.angled_animation import AngledAnimation
 from src.animations.horizontal_animation import HorizontalAnimation

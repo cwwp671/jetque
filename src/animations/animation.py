@@ -1,8 +1,7 @@
-# animation/animation.py
+# jetque/src/animations/animation.py
+
 import logging
-
 from PyQt6.QtCore import QObject, QTimer, pyqtSignal
-
 
 class Animation(QObject):
     """Base class for all animations."""
@@ -15,6 +14,7 @@ class Animation(QObject):
         self.config = config
         self.elapsed_time = 0.0
         self.duration = 1.5  # Default duration
+        self.type = self.config['text']['animation']['type']  # Added type attribute
         self._setup_timer()
         logging.debug("Animation initialized.")
 
@@ -41,3 +41,16 @@ class Animation(QObject):
         self.finished.emit(self)
         logging.debug("Finished signal emitted.")
 
+    def bump_elapsed_time(self, percentage=10.0):
+        """
+        Manually increase the elapsed time to bump the animation ahead based on a percentage of its duration.
+
+        Args:
+            percentage (float): The percentage of the animation's duration to bump.
+        """
+        delta = (percentage / 100.0) * self.duration
+        # self.elapsed_time += delta
+        logging.debug(f"Bumped elapsed_time by {delta} seconds ({percentage}%). New elapsed_time: {self.elapsed_time}")
+        if self.elapsed_time >= self.duration:
+            logging.debug("Bumped elapsed_time exceeds duration. Stopping animation.")
+            self.stop()

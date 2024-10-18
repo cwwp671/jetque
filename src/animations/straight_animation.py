@@ -1,8 +1,7 @@
-# animation/straight_animation.py
+# jetque/src/animations/straight_animation.py
+
 import logging
-
 from src.animations.animation import Animation
-
 
 class StraightAnimation(Animation):
     """Implements straight scroll (Up, Down) animation."""

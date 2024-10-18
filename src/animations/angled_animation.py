@@ -1,9 +1,8 @@
-# animation/angled_animation.py
-import logging
+# jetque/src/animations/angled_animation.py
 
+import logging
 from src.animations.animation import Animation
 from PyQt6.QtWidgets import QGraphicsOpacityEffect
-
 
 class AngledAnimation(Animation):
     """Implements Angled animation (AngleUp/AngleDown and Left/Right)."""

@@ -18,6 +18,12 @@ class AnimationController(QObject):
 
     def play_animation(self, text, animation_type, behavior, direction):
         """Create and play a new animation."""
+        # Bump existing animations of the same type to prevent overlap
+        bump_percentage = 10.0
+        for animation in self.active_animations:
+            if animation.type == animation_type:
+                animation.bump_elapsed_time(bump_percentage)
+
         # Update the config with the specified animation settings
         self.config['text']['content'] = text
         self.config['text']['animation']['type'] = animation_type
