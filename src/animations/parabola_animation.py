@@ -139,7 +139,7 @@ class ParabolaAnimation(Animation):
             elif self.behavior == 'CurvedRight' and x_position >= self.vertex_x:
                 distance_from_peak: float = abs(x_position - self.vertex_x)
                 total_horizontal_distance: float = abs(self.end_x - self.vertex_x)
-                opacity = max(
+                opacity: float = max(
                     self.MIN_OPACITY,
                     self.MAX_OPACITY - (distance_from_peak / total_horizontal_distance)
                 )

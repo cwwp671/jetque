@@ -1,8 +1,11 @@
 # jetque/src/events/event_handler.py
 
 import logging
+import pdb
+import sys
 from PyQt6.QtCore import QObject, pyqtSignal
 from src.events.event import Event, CombatEvent, SkillEvent, AvoidanceEvent
+from config.debug_config import is_debug_mode
 
 class EventHandler(QObject):
     """
@@ -30,22 +33,39 @@ class EventHandler(QObject):
         Process and dispatch events from the queue.
         """
         # logging.debug("Processing event queue")
-        if self.event_queue:
-            event = self.event_queue.pop(0)
-            logging.debug(f"Dispatching event: {event}")
-            self.dispatch_event(event)
+        try:
+            if self.event_queue:
+                event = self.event_queue.pop(0)
+                logging.debug(f"Dispatching event: {event}")
+                self.dispatch_event(event)
+        except Exception as e:
+            logging.error(f"Error processing event queue: {e}")
+            self.debug_breakpoint(condition=True)
 
     def dispatch_event(self, event: Event) -> None:
         """
         Dispatch event by emitting signals.
         """
         # logging.debug(f"Dispatching event: {event}")
-        if event.event_category == 'incoming':
-            self.incoming_event_signal.emit(event)
-        elif event.event_category == 'outgoing':
-            self.outgoing_event_signal.emit(event)
-        else:
-            logging.warning(f"Unhandled event category: {event.event_category}")
+        try:
+            if event.event_category == 'incoming':
+                self.incoming_event_signal.emit(event)
+            elif event.event_category == 'outgoing':
+                self.outgoing_event_signal.emit(event)
+            else:
+                logging.warning(f"Unhandled event category: {event.event_category}")
+                self.debug_breakpoint(condition=True)
+        except Exception as e:
+            logging.error(f"Error dispatching event: {e}")
+            self.debug_breakpoint(condition=True)
+
+    def debug_breakpoint(self, condition=True):
+        """
+        Invoke pdb.set_trace() if the condition is True and in debug mode.
+        """
+        if is_debug_mode() and condition:
+            logging.debug("Conditional breakpoint triggered in EventHandler")
+            pdb.set_trace()
 
     @staticmethod
     def display_combat_event(event: CombatEvent) -> None:
@@ -57,4 +77,4 @@ class EventHandler(QObject):
 
     @staticmethod
     def display_avoidance_event(event: AvoidanceEvent) -> None:
-        logging.debug(f"Displaying Avoidance Event: {event} (Type: {event.avoidance_type}")
+        logging.debug(f"Displaying Avoidance Event: {event} (Type: {event.avoidance_type})")

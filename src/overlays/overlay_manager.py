@@ -1,8 +1,8 @@
-# jetque/src/overlays/overlay_manager.py
-
 import logging
 from src.overlays.configure_overlay import ConfigureOverlay
 from src.overlays.active_overlay import ActiveOverlay
+from config.config_loader import load_config, save_config
+
 
 class OverlayManager:
     def __init__(self):
@@ -10,7 +10,7 @@ class OverlayManager:
 
     def create_overlay(self, name, overlay_data):
         """Create an overlay in configure mode"""
-        configure_overlay = ConfigureOverlay(name, overlay_data)
+        configure_overlay = ConfigureOverlay(name, overlay_data, self)
         self.overlays[name] = configure_overlay
         configure_overlay.show()
 
@@ -29,36 +29,24 @@ class OverlayManager:
             return
 
         current_overlay = self.overlays[name]
-        logging.debug("After current_overlay assignment")
         overlay_data = current_overlay.overlay_data
-        logging.debug("after overlay_data assignment")
 
         if isinstance(current_overlay, ConfigureOverlay):
-            logging.debug("in the if isinstance")
             # Hide and schedule for deletion
             current_overlay.hide()
             current_overlay.deleteLater()
-            logging.debug("scheduled current_overlay for deletion")
             # Create active overlay
-            active_overlay = ActiveOverlay(name, overlay_data)
-            logging.debug("active_overlay declaration")
+            active_overlay = ActiveOverlay(name, overlay_data, self)
             self.overlays[name] = active_overlay
-            logging.debug("name assigned")
             active_overlay.show()
-            logging.debug("showing active overlay")
         elif isinstance(current_overlay, ActiveOverlay):
-            logging.debug("in elif isinstance")
             # Hide and schedule for deletion
             current_overlay.hide()
             current_overlay.deleteLater()
-            logging.debug("scheduled current_overlay for deletion")
             # Recreate configure overlay
-            configure_overlay = ConfigureOverlay(name, overlay_data)
-            logging.debug("configure_overlay declaration")
+            configure_overlay = ConfigureOverlay(name, overlay_data, self)
             self.overlays[name] = configure_overlay
-            logging.debug("name assigned")
             configure_overlay.show()
-            logging.debug("showing configuration overlay")
 
     def display_event(self, overlay_name, event):
         if overlay_name in self.overlays:
@@ -71,7 +59,14 @@ class OverlayManager:
             logging.warning(f"Overlay '{overlay_name}' does not exist.")
 
     def save_overlay_data(self):
-        """Save the current state of overlays to a file"""
-        logging.debug("Save overlay data requested")
-        # Implement JSON save logic here
-        pass
+        """Save the current state of all overlays to the config file."""
+        logging.debug("Saving overlay data")
+        updated_overlays = {}
+
+        for name, overlay in self.overlays.items():
+            updated_overlays[name] = overlay.overlay_data
+
+        # Load the current config and update the overlays section
+        config_data = load_config()
+        config_data['overlays'] = updated_overlays
+        save_config(config_data)

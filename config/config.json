@@ -1,7 +1,7 @@
 {
     "log_directory": "C:/Everquest/Logs",
     "dbg_file": "C:/Everquest/Logs/dbg.txt",
-    "char_file": "C:/Everquest/Logs/eqlog_Lifealerts_P1999Green.txt",
+    "char_file": "C:/Everquest/Logs/eqlog_Meatsman_P1999Green.txt",
     "chat_log_timer": 5,
     "dbg_log_timer": 1000,
     "check_interval": 1,
@@ -10,46 +10,54 @@
     "overlays": {
         "Incoming": {
             "position": [
-                0,
-                0
+                700,
+                420
             ],
-            "width": 300,
-            "height": 200,
+            "width": 500,
+            "height": 600,
             "config": {
                 "text": {
                     "color": "red",
-                    "font": "Arial",
+                    "font": "Aileron",
                     "size": 18,
                     "animation": {
                         "fps": 60,
-                        "ms_per_frame": 16
-                    }
+                        "ms_per_frame": 16,
+                        "type": "Parabola",
+                        "behavior": "CurvedLeft",
+                        "direction": "Up"
+                    },
+                    "content": "(a scary monster) 100"
                 }
             }
         },
         "Outgoing": {
             "position": [
-                0,
-                0
+                1360,
+                420
             ],
-            "width": 300,
-            "height": 200,
+            "width": 500,
+            "height": 600,
             "config": {
                 "text": {
                     "color": "white",
-                    "font": "Arial",
+                    "font": "Aileron",
                     "size": 18,
                     "animation": {
                         "fps": 60,
-                        "ms_per_frame": 16
-                    }
+                        "ms_per_frame": 16,
+                        "type": "Parabola",
+                        "behavior": "CurvedRight",
+                        "direction": "Up"
+                    },
+                    "content": "100 (punch)"
                 }
             }
         },
         "Notifications": {
             "position": [
-                0,
-                0
+                1101,
+                126
             ],
             "width": 400,
             "height": 100,
