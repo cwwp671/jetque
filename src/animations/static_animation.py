@@ -11,7 +11,8 @@ class StaticAnimation(Animation):
     def __init__(self, text_label, config):
         super().__init__(text_label, config)
         self.duration = self.DEFAULT_DURATION
-
+        self.behavior = None
+        self.direction = None
         self.ms_per_frame = self.config['text']['animation']['ms_per_frame']
         self.delta_time = self.ms_per_frame / 1000.0
 

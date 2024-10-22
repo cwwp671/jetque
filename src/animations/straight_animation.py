@@ -11,6 +11,7 @@ class StraightAnimation(Animation):
     def __init__(self, text_label, config):
         super().__init__(text_label, config)
         animation_config = config['text']['animation']
+        self.behavior = None
         self.direction = animation_config.get('direction', 'Up')
         self.move_distance = animation_config.get('move_distance', self.DEFAULT_MOVE_DISTANCE)
 

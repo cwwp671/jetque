@@ -14,8 +14,8 @@ class AngledAnimation(Animation):
     def __init__(self, text_label, config):
         super().__init__(text_label, config)
         animation_config = config['text']['animation']
-        self.direction = animation_config.get('direction', 'Left')
         self.behavior = animation_config.get('behavior', 'AngleUp')
+        self.direction = animation_config.get('direction', 'Left')
 
         self.start_x = text_label.x()
         self.start_y = text_label.y()

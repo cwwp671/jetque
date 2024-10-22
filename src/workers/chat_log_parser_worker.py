@@ -51,7 +51,7 @@ class ChatLogParserWorker(QObject):
         # Timer for every 0.25 seconds
         timer_0_25 = QTimer()
         timer_0_25.timeout.connect(self.write_log_0_25)
-        timer_0_25.start(250)
+        timer_0_25.start(100)
 
         # Timer for every 0.5 seconds
         timer_0_5 = QTimer()
@@ -85,9 +85,10 @@ class ChatLogParserWorker(QObject):
         """Simulate log writing every 0.5 seconds."""
         try:
             with open(self.log_file_path, 'a') as dummy_log:
-                dummy_log.write("A scary monster tries to hit YOU, but misses!\n")
-                dummy_log.write("You try to punch a scary monster, but miss!\n")
-                dummy_log.flush()
+                #dummy_log.write("A scary monster tries to hit YOU, but misses!\n")
+                #dummy_log.write("You try to punch a scary monster, but miss!\n")
+                #dummy_log.flush()
+                logging.debug("Commented out writing in 0.5")
             logging.debug("ChatLogParserWorker: Wrote simulated 0.5s log")
         except Exception as e:
             logging.error(f"Error writing simulated 0.5s log: {e}")
@@ -100,9 +101,10 @@ class ChatLogParserWorker(QObject):
         """Simulate log writing every 0.75 seconds."""
         try:
             with open(self.log_file_path, 'a') as dummy_log:
-                dummy_log.write("You backstab a scary monster for 100 points of damage.\n")
-                dummy_log.write("A scary monster bashes you for 100 points of damage.\n")
-                dummy_log.flush()
+                #dummy_log.write("You backstab a scary monster for 100 points of damage.\n")
+                #dummy_log.write("A scary monster bashes you for 100 points of damage.\n")
+                #dummy_log.flush()
+                logging.debug("Commented out writing in 0.75")
             logging.debug("ChatLogParserWorker: Wrote simulated 0.75s log")
         except Exception as e:
             logging.error(f"Error writing simulated 0.75s log: {e}")

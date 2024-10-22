@@ -13,8 +13,8 @@ class Animation(QObject):
         self.text_label = text_label
         self.config = config
         self.elapsed_time = 0.0
-        self.duration = 1.5  # Default duration
-        self.type = self.config['text']['animation']['type']  # Added type attribute
+        self.duration = self.config['text']['animation'].get('duration', 1.5)
+        self.type = self.config['text']['animation']['type']
         self._setup_timer()
         logging.debug("Animation initialized.")
 
@@ -41,16 +41,17 @@ class Animation(QObject):
         self.finished.emit(self)
         logging.debug("Finished signal emitted.")
 
-    def bump_elapsed_time(self, percentage=10.0):
+    def bump_elapsed_time(self, percentage=0.10):
         """
         Manually increase the elapsed time to bump the animation ahead based on a percentage of its duration.
 
         Args:
             percentage (float): The percentage of the animation's duration to bump.
         """
-        delta = (percentage / 100.0) * self.duration
-        # self.elapsed_time += delta
-        logging.debug(f"Bumped elapsed_time by {delta} seconds ({percentage}%). New elapsed_time: {self.elapsed_time}")
+        delta = percentage * self.duration
+        self.elapsed_time += delta
         if self.elapsed_time >= self.duration:
             logging.debug("Bumped elapsed_time exceeds duration. Stopping animation.")
             self.stop()
+        else:
+            logging.debug(f"New elapsed_time after bumping: {self.elapsed_time:.2f}s")

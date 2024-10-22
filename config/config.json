@@ -1,7 +1,7 @@
 {
     "log_directory": "C:/Everquest/Logs",
     "dbg_file": "C:/Everquest/Logs/dbg.txt",
-    "char_file": "C:/Everquest/Logs/eqlog_Meatsman_P1999Green.txt",
+    "char_file": "C:/Everquest/Logs/eqlog_Lifealerts_P1999Green.txt",
     "chat_log_timer": 5,
     "dbg_log_timer": 1000,
     "check_interval": 1,

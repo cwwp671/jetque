@@ -26,6 +26,7 @@ class PowAnimation(Animation):
         self.font_size = text_label.font().pointSize()
         self.duration = self.fade_in_time + self.display_time + self.fade_out_time
         self.behavior = config['text']['animation'].get('behavior', 'Normal')
+        self.direction = None
         self.ms_per_frame = self.config['text']['animation']['ms_per_frame']
         self.delta_time = self.ms_per_frame / 1000.0
         self.opacity_effect = QGraphicsOpacityEffect()
