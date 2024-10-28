@@ -4,7 +4,7 @@ import logging
 from PyQt6.QtCore import Qt
 from src.overlays.overlay import Overlay
 from src.animations.animation_controller import AnimationController
-from src.events.event import AvoidanceEvent
+from src.events.event import AvoidanceEvent, SkillEvent
 
 
 class ActiveOverlay(Overlay):
@@ -39,11 +39,22 @@ class ActiveOverlay(Overlay):
             animation_type = 'Parabola'
             behavior = 'CurvedRight'
             direction = 'Up'
+
             # Generate the message to display
             if isinstance(event, AvoidanceEvent):
                 message = f"{event.avoidance_type}"
+            elif isinstance(event, SkillEvent):
+                animation_type = 'Pow'
+                behavior = 'Jiggle'
+                direction = 'None'
+                message = f"{event.damage_value} ({event.action})"
             else:
                 message = f"{event.damage_value}"
+        elif event.event_category == 'notification':
+            animation_type = 'Pow'
+            behavior = 'Jiggle'
+            direction = 'None'
+            message = f"{event.damage_value} ({event.action})"
         else:
             # Default settings
             animation_type = 'Static'

@@ -1,7 +1,7 @@
 {
     "log_directory": "C:/Everquest/Logs",
     "dbg_file": "C:/Everquest/Logs/dbg.txt",
-    "char_file": "C:/Everquest/Logs/eqlog_Lifealerts_P1999Green.txt",
+    "char_file": "C:/Everquest/Logs/eqlog_Concealls_P1999Green.txt",
     "chat_log_timer": 5,
     "dbg_log_timer": 1000,
     "check_interval": 1,
@@ -11,14 +11,14 @@
         "Incoming": {
             "position": [
                 700,
-                420
+                314
             ],
             "width": 500,
             "height": 600,
             "config": {
                 "text": {
                     "color": "red",
-                    "font": "Aileron",
+                    "font": "Arial",
                     "size": 18,
                     "animation": {
                         "fps": 60,
@@ -33,15 +33,15 @@
         },
         "Outgoing": {
             "position": [
-                1360,
-                420
+                1335,
+                314
             ],
             "width": 500,
             "height": 600,
             "config": {
                 "text": {
                     "color": "white",
-                    "font": "Aileron",
+                    "font": "Arial",
                     "size": 18,
                     "animation": {
                         "fps": 60,
@@ -54,13 +54,13 @@
                 }
             }
         },
-        "Notifications": {
+        "Notification": {
             "position": [
-                1101,
-                126
+                904,
+                17
             ],
-            "width": 400,
-            "height": 100,
+            "width": 741,
+            "height": 839,
             "config": {
                 "text": {
                     "color": "yellow",
@@ -68,7 +68,10 @@
                     "size": 18,
                     "animation": {
                         "fps": 60,
-                        "ms_per_frame": 16
+                        "ms_per_frame": 16,
+                        "type": "Pow",
+                        "behavior": "Jiggle",
+                        "direction": "None"
                     }
                 }
             }

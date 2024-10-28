@@ -46,7 +46,9 @@ class AnimationController(QObject):
         """Perform real-time collision detection among all active animations."""
 
         for i, anim1 in enumerate(self.active_animations):
+            logging.debug(f"Animation 1: {anim1.animation_type}")
             for j, anim2 in enumerate(self.active_animations):
+                logging.debug(f"Animation 2: {anim2.animation_type}")
                 if i >= j:
                     continue
 
@@ -83,7 +85,7 @@ class AnimationController(QObject):
         if older_anim.elapsed_time >= 1.04 * newer_anim.elapsed_time:
             return
 
-        bump_percentage = 0.06
+        bump_percentage = 0.15
         logging.debug(f"Bumping older animation '{older_anim.text_label.text()}' by {bump_percentage * 100}%.")
         older_anim.bump_elapsed_time(bump_percentage)
 

@@ -130,7 +130,7 @@ class EventFactory:
                 #logging.debug(f"Outgoing skill match: {line}")
                 action = EventFactory.normalize_action(match.group('action'))
                 return SkillEvent(
-                    'outgoing',
+                    'notification',
                     action,
                     'Player',
                     match.group('target'),

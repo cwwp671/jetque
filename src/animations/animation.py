@@ -12,8 +12,16 @@ class Animation(QObject):
         super().__init__()
         self.text_label = text_label
         self.config = config
+        self.parent_widget = text_label.parentWidget()
+        self.overlay_width: float = self.parent_widget.width()
+        self.overlay_height: float = self.parent_widget.height()
+        self.label_width: float = self.text_label.width()
+        self.label_height: float = self.text_label.height()
         self.elapsed_time = 0.0
+        self.start_x: float = 0.0
+        self.start_y: float = 0.0
         self.duration = self.config['text']['animation'].get('duration', 1.5)
+        self.animation_type = self.config['text']['animation']['type']
         self.type = self.config['text']['animation']['type']
         self._setup_timer()
         logging.debug("Animation initialized.")
@@ -35,13 +43,19 @@ class Animation(QObject):
         """Handle the animation logic. To be overridden by subclasses."""
         raise NotImplementedError("Subclasses must implement the animate method.")
 
+    def start_in_center(self):
+        self.start_x = (self.overlay_width - self.label_width) // 2
+        self.start_y = (self.overlay_height - self.label_height) // 2
+        self.text_label.set_position(self.start_x, self.start_y)
+        self.text_label.show()
+
     def stop(self):
         """Stop the animation."""
         self.timer.stop()
         self.finished.emit(self)
         logging.debug("Finished signal emitted.")
 
-    def bump_elapsed_time(self, percentage=0.10):
+    def handle_collision(self, percentage=0.10):
         """
         Manually increase the elapsed time to bump the animation ahead based on a percentage of its duration.
 

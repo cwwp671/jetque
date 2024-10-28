@@ -49,6 +49,7 @@ class MainWindow(QMainWindow):
         self.setup_tray()
         self.event_handler.incoming_event_signal.connect(self.handle_incoming_event)
         self.event_handler.outgoing_event_signal.connect(self.handle_outgoing_event)
+        self.event_handler.notification_event_signal.connect(self.handle_notification_event)
         self.setup_connections()
         print(f"Debug Mode: {os.getenv('JETQUE_DEBUG', 'False')}")
 
@@ -303,6 +304,11 @@ class MainWindow(QMainWindow):
     def handle_outgoing_event(self, event):
         logging.debug(f"Handling outgoing event: {event}")
         self.overlay_manager.display_event('Outgoing', event)
+
+    @pyqtSlot(Event)
+    def handle_notification_event(self, event):
+        logging.debug(f"Handling incoming event: {event}")
+        self.overlay_manager.display_event('Notification', event)
 
     @pyqtSlot(str)
     def handle_new_chat_event(self, event: str):

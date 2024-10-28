@@ -14,6 +14,7 @@ class EventHandler(QObject):
 
     incoming_event_signal = pyqtSignal(Event)
     outgoing_event_signal = pyqtSignal(Event)
+    notification_event_signal = pyqtSignal(Event)
 
     def __init__(self):
         super().__init__()
@@ -52,6 +53,8 @@ class EventHandler(QObject):
                 self.incoming_event_signal.emit(event)
             elif event.event_category == 'outgoing':
                 self.outgoing_event_signal.emit(event)
+            elif event.event_category == 'notification':
+                self.notification_event_signal.emit(event)
             else:
                 logging.warning(f"Unhandled event category: {event.event_category}")
                 self.debug_breakpoint(condition=True)

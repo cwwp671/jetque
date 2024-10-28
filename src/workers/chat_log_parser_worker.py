@@ -51,7 +51,7 @@ class ChatLogParserWorker(QObject):
         # Timer for every 0.25 seconds
         timer_0_25 = QTimer()
         timer_0_25.timeout.connect(self.write_log_0_25)
-        timer_0_25.start(100)
+        timer_0_25.start(250)
 
         # Timer for every 0.5 seconds
         timer_0_5 = QTimer()

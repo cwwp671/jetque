@@ -1,3 +1,4 @@
+# jetque/src/animations/parabola_animation.py
 import logging
 
 from PyQt6.QtWidgets import QGraphicsOpacityEffect
