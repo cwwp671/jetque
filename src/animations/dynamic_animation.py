@@ -1,14 +1,16 @@
 """
-File: src.animations.static_animation.py
+File: src.animations.dynamic_animation.py
 
-    Class: StaticAnimation(Animation)
+    Class: DynamicAnimation(Animation)
         Attributes:
-            # Jiggle (Bool)
-            # Jiggle Intensity (float From AnimationFactory jiggle_map)
+            # Horizontal Direction (int From AnimationFactory direction_map)
+            # Vertical Direction (int From AnimationFactory direction_map)
+            # Ending Position (QPointF From AnimationFactory position_map)
+            # Easing Style (QEasingCurve.Type From AnimationFactory easing_map)
         Methods:
 		    __init__(parameters supplied from config / AnimationFactory)
 				# Super the Parent Init
-                # Initializes any static specific attributes
+                # Initializes any dynamic specific attributes
             play()
                 # Possibility this is an Abstract method to be overridden by individual animations
 				# Possibility this is not an Abstract method and houses common logic
@@ -18,12 +20,10 @@ File: src.animations.static_animation.py
             setup_animations()
                 # Possibility this is an Abstract method to be overridden by individual animations
 				# Possibility this is not an Abstract method and houses common logic
-			apply_jiggle()
-				# Manipulates the position with jiggle effect
             connect_signals()
 				# Supers the Parent
-                # Connects any necessary static animation signals to handlers
+                # Connects any necessary dynamic animation signals to handlers
 			connect_slots()
 				# Supers the Parent
-				# Connects any necessary static animation slots to handlers
+				# Connects any necessary dynamic animation slots to handlers
 """
