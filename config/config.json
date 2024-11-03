@@ -11,7 +11,7 @@
         "Incoming": {
             "position": [
                 700,
-                314
+                300
             ],
             "width": 500,
             "height": 600,
@@ -34,7 +34,7 @@
         "Outgoing": {
             "position": [
                 1335,
-                314
+                300
             ],
             "width": 500,
             "height": 600,
@@ -56,11 +56,11 @@
         },
         "Notification": {
             "position": [
-                904,
-                17
+                970,
+                100
             ],
-            "width": 741,
-            "height": 839,
+            "width": 500,
+            "height": 600,
             "config": {
                 "text": {
                     "color": "yellow",

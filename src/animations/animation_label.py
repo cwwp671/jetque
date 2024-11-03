@@ -13,12 +13,11 @@ from PyQt6.QtGui import (
     QPen,
     QPixmap,
 )
-from PyQt6.QtWidgets import QLabel
+from PyQt6.QtWidgets import QLabel, QWidget
 
 from src.overlays.active_overlay import ActiveOverlay
 from .animation_icon import AnimationIcon  # Importing AnimationIcon from animation_icon.py
 
-# Constants
 DEFAULT_FONT_TYPE: str = "Arial"
 DEFAULT_FONT_SIZE: int = 24
 DEFAULT_FONT_COLOR: QColor = QColor("white")
@@ -37,7 +36,7 @@ class AnimationLabel(QLabel):
 
     def __init__(
             self,
-            parent: Optional[ActiveOverlay] = None,
+            parent: QWidget = None,
             text: str = "",
             icon_pixmap: Optional[QPixmap] = None,
             font_type: str = DEFAULT_FONT_TYPE,
