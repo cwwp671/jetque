@@ -3,7 +3,7 @@
 import logging
 from PyQt6.QtCore import Qt
 from src.overlays.overlay import Overlay
-from src.animations.animation_controller import AnimationController
+from src.animations.animation_manager import AnimationManager
 from src.events.event import AvoidanceEvent, SkillEvent
 
 
@@ -21,7 +21,7 @@ class ActiveOverlay(Overlay):
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground, True)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         self.setStyleSheet("background: transparent;")
-        self.animation_controller = AnimationController(self, overlay_data.get('config', {}))
+        self.animation_controller = AnimationManager(self, overlay_data.get('config', {}))
         logging.debug("ActiveOverlay __init__: End")
 
     def display_event(self, event):

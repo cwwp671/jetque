@@ -6,7 +6,7 @@ import sys
 from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot, QTimer
 from src.parsers.chat_log_parser import ChatLogParser
 from src.events.event_factory import EventFactory
-from src.events.event_handler import EventHandler
+from src.events.event_manager import EventManager
 from config.debug_config import is_debug_mode
 
 
@@ -15,7 +15,7 @@ class ChatLogParserWorker(QObject):
     error_signal = pyqtSignal(str)
     finished = pyqtSignal()
 
-    def __init__(self, log_file_path, event_handler: EventHandler, test_mode=False):
+    def __init__(self, log_file_path, event_handler: EventManager, test_mode=False):
         super().__init__()
         self.log_file_path = log_file_path
         self.event_handler = event_handler

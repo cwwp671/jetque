@@ -3,14 +3,18 @@
 import logging
 from typing import Any, Dict, Optional, Tuple
 
-from PyQt6.QtCore import QEasingCurve, QPointF
+from PyQt6.QtCore import QEasingCurve, QPointF, QUrl, QObject
 from PyQt6.QtGui import QPixmap
+from PyQt6.QtMultimedia import QSoundEffect
 from PyQt6.QtWidgets import QWidget
 
 from src.animations.animation import Animation
 from src.animations.animation_label import AnimationLabel
-from src.animations.dynamics import DirectionalAnimation, ParabolaAnimation, SwivelAnimation
-from src.animations.statics import StationaryAnimation, PowAnimation
+from src.animations.dynamics.directional_animation import DirectionalAnimation
+from src.animations.dynamics.parabola_animation import ParabolaAnimation
+from src.animations.dynamics.swivel_animation import SwivelAnimation
+from src.animations.statics.stationary_animation import StationaryAnimation
+from src.animations.statics.pow_animation import PowAnimation
 
 # Constants
 TEMPORARY_WIDGET_WIDTH: float = 500.0  # Temporary width until specific overlays are passed
@@ -102,11 +106,10 @@ class AnimationFactory:
             Optional[Animation]: The created Animation instance or None if creation failed.
         """
         try:
+            parent: QObject = QObject()  # TODO: Temporary Parent variable. Needs actual parent widget.
             animation_type: str = config.get("type")
-            sound: str = config.get("sound")
-            icon: str = config.get("icon")
-            text: str = config.get("text")
-            duration: float = config.get("duration", 2.25)
+            sound: QSoundEffect = self._get_sound_effect(config.get("sound"))
+            duration: int = int(config.get("duration", 2.25) * 1000)
             starting_position: QPointF = self.POSITION_MAP.get(
                 config.get("starting_position", "Top-Left")
             )
@@ -126,8 +129,8 @@ class AnimationFactory:
 
             label: AnimationLabel = AnimationLabel(
                 parent=self._get_parent_widget(),
-                text=text,
-                icon_pixmap=self._get_icon_pixmap(icon),
+                text=config.get("text"),
+                icon_pixmap=self._get_icon_pixmap(config.get("icon")),
                 font_type=config.get("font_type"),
                 font_size=config.get("font_size"),
                 font_color=config.get("font_color"),
@@ -144,12 +147,12 @@ class AnimationFactory:
 
             parent_type: str = self._get_animation_type_parent(animation_type)
             if parent_type == "Dynamic":
-                return self._build_dynamic_animation(config, animation_type, sound, icon, text,
+                return self._build_dynamic_animation(config, parent, animation_type, sound,
                                                      duration, starting_position, fade_in, fade_out,
                                                      fade_in_percentage, fade_out_percentage,
                                                      fade_in_easing_style, fade_out_easing_style, label)
             elif parent_type == "Static":
-                return self._build_static_animation(config, animation_type, sound, icon, text,
+                return self._build_static_animation(config, parent, animation_type, sound,
                                                     duration, starting_position, fade_in, fade_out,
                                                     fade_in_percentage, fade_out_percentage,
                                                     fade_in_easing_style, fade_out_easing_style, label)
@@ -164,11 +167,10 @@ class AnimationFactory:
     def _build_dynamic_animation(
             self,
             config: Dict[str, Any],
+            parent: QObject,
             animation_type: str,
-            sound: str,
-            icon: str,
-            text: str,
-            duration: float,
+            sound: QSoundEffect,
+            duration: int,
             starting_position: QPointF,
             fade_in: bool,
             fade_out: bool,
@@ -185,9 +187,7 @@ class AnimationFactory:
             config (Dict[str, Any]): Configuration dictionary for the animation.
             animation_type (str): The type of animation.
             sound (str): Sound associated with the animation.
-            icon (str): Icon associated with the animation.
-            text (str): Text to display in the animation.
-            duration (float): Duration of the animation.
+            duration (int): Duration of the animation.
             starting_position (QPointF): Starting position of the animation.
             fade_in (bool): Whether to fade in.
             fade_out (bool): Whether to fade out.
@@ -215,10 +215,9 @@ class AnimationFactory:
 
             if animation_type == "Directional":
                 animation = DirectionalAnimation(
+                    parent=parent,
                     animation_type=animation_type,
                     sound=sound,
-                    icon=icon,
-                    text=text,
                     duration=duration,
                     starting_position=starting_position,
                     fade_in=fade_in,
@@ -233,12 +232,11 @@ class AnimationFactory:
                     easing_style=easing_style
                 )
             elif animation_type == "Parabola":
-                vertex_position: QPointF = self._get_vertex_position()
+                vertex_position: QPointF = self._get_vertex_position(starting_position, ending_position)
                 animation = ParabolaAnimation(
+                    parent=parent,
                     animation_type=animation_type,
                     sound=sound,
-                    icon=icon,
-                    text=text,
                     duration=duration,
                     starting_position=starting_position,
                     fade_in=fade_in,
@@ -256,12 +254,15 @@ class AnimationFactory:
             elif animation_type == "Swivel":
                 phase_1_percentage: float = config.get("phase_1_percentage", 0.50)
                 phase_2_percentage: float = config.get("phase_2_percentage", 0.50)
-                swivel_position: QPointF = self._get_swivel_position()
+                swivel_position: QPointF = self._get_swivel_position(
+                    starting_position,
+                    ending_position,
+                    phase_1_percentage
+                )
                 animation = SwivelAnimation(
+                    parent=parent,
                     animation_type=animation_type,
                     sound=sound,
-                    icon=icon,
-                    text=text,
                     duration=duration,
                     starting_position=starting_position,
                     fade_in=fade_in,
@@ -274,8 +275,8 @@ class AnimationFactory:
                     ending_position=ending_position,
                     direction=direction,
                     easing_style=easing_style,
-                    phase_1_percentage=phase_1_percentage,
-                    phase_2_percentage=phase_2_percentage,
+                    phase_1_duration=self._calculate_phase_duration(duration, phase_1_percentage),
+                    phase_2_duration=self._calculate_phase_duration(duration, phase_2_percentage),
                     swivel_position=swivel_position
                 )
             else:
@@ -292,11 +293,10 @@ class AnimationFactory:
     def _build_static_animation(
             self,
             config: Dict[str, Any],
+            parent: QObject,
             animation_type: str,
-            sound: str,
-            icon: str,
-            text: str,
-            duration: float,
+            sound: QSoundEffect,
+            duration: int,
             starting_position: QPointF,
             fade_in: bool,
             fade_out: bool,
@@ -313,9 +313,7 @@ class AnimationFactory:
             config (Dict[str, Any]): Configuration dictionary for the animation.
             animation_type (str): The type of animation.
             sound (str): Sound associated with the animation.
-            icon (str): Icon associated with the animation.
-            text (str): Text to display in the animation.
-            duration (float): Duration of the animation.
+            duration (int): Duration of the animation.
             starting_position (QPointF): Starting position of the animation.
             fade_in (bool): Whether to fade in.
             fade_out (bool): Whether to fade out.
@@ -334,10 +332,9 @@ class AnimationFactory:
 
             if animation_type == "Stationary":
                 animation = StationaryAnimation(
+                    parent=parent,
                     animation_type=animation_type,
                     sound=sound,
-                    icon=icon,
-                    text=text,
                     duration=duration,
                     starting_position=starting_position,
                     fade_in=fade_in,
@@ -359,10 +356,9 @@ class AnimationFactory:
                     QEasingCurve.Type.Linear
                 )
                 animation = PowAnimation(
+                    parent=parent,
                     animation_type=animation_type,
                     sound=sound,
-                    icon=icon,
-                    text=text,
                     duration=duration,
                     starting_position=starting_position,
                     fade_in=fade_in,
@@ -412,6 +408,19 @@ class AnimationFactory:
             return "Unknown Parent Type"
 
     @staticmethod
+    def _get_sound_effect(sound: str) -> QSoundEffect:
+        """
+        Initialize the sound effect if a sound file is provided.
+        """
+        try:
+            sound_effect = QSoundEffect()
+            sound_effect.setSource(QUrl.fromLocalFile(sound))
+            logging.debug("Sound Created for Animation: %s", sound)
+            return sound_effect
+        except Exception as e:
+            logging.exception("Error Creating Sound for Animation: %s", e)
+
+    @staticmethod
     def _get_icon_pixmap(icon: str) -> QPixmap:
         """
         Converts an icon file name to a QPixmap.
@@ -443,23 +452,70 @@ class AnimationFactory:
         return QWidget()
 
     @staticmethod
-    def _get_swivel_position() -> QPointF:
+    def _get_swivel_position(starting_position: QPointF, ending_position: QPointF, percentage: float) -> QPointF:
         """
-        Calculates the swivel position for the SwivelAnimation.
+            Get the swivel position, which is the ending position of phase 1
+            and the starting position of phase 2. It is calculated based on
+            the phase 1 percentage of the duration.
 
         Returns:
             QPointF: The swivel position.
         """
-        # TODO: Implement logic to calculate swivel position based on what percentage of duration Phase 1 is
-        return QPointF(0.0, 0.0)
+        try:
+            swivel_position = QPointF(
+                starting_position.x() + (ending_position.x() - starting_position.x()) * percentage,
+                starting_position.y() + (ending_position.y() - starting_position.y()) * percentage
+            )
+            # TODO: Implement logic to determine if swivel_position is out of bounds of the window
+            logging.debug(
+                f"Swivel position set to ({swivel_position.x()}, "
+                f"{swivel_position.y()})."
+            )
+            return swivel_position
+        except Exception as e:
+            logging.exception("Failed to set up swivel position: %s", e)
 
     @staticmethod
-    def _get_vertex_position() -> QPointF:
+    def _get_vertex_position(starting_position: QPointF, ending_position: QPointF) -> QPointF:
         """
         Calculates the vertex position for the ParabolaAnimation.
 
         Returns:
             QPointF: The vertex position.
         """
-        # TODO: Implement logic to calculate vertex position based on starting and ending positions
-        return QPointF(0.0, 0.0)
+        try:
+            vertex_position = QPointF(
+                starting_position.x() + ending_position.x() / 2.0,
+                starting_position.y() + ending_position.y() / 2.0
+            )
+            # TODO: Implement logic to determine if vertex_position is out of bounds of the window
+            logging.debug(f"Calculated vertex position: {vertex_position}")
+            return vertex_position
+        except Exception as e:
+            logging.exception("Failed to calculate vertex position: %s", e)
+
+    @staticmethod
+    def _calculate_phase_duration(duration: int, percentage: float) -> int:
+        """
+        Calculate the duration of a phase based on the total duration and percentage.
+
+        Args:
+            duration (int): The total duration of the animation in milliseconds.
+            percentage (float): The percentage of the total duration for the phase.
+
+        Returns:
+            int: The calculated duration for the phase in milliseconds.
+        """
+        if not (0 < percentage < 1):
+            logging.warning(
+                "Percentage %.2f is out of bounds (0 < percentage < 1). "
+                "Defaulting to 0.5.", percentage
+            )
+            percentage = 0.5  # Default to 50% if out of bounds
+        calculated_duration = int(duration * percentage)
+        logging.debug(
+            "Calculated duration: %d ms for percentage: %.2f%%.",
+            calculated_duration,
+            percentage * 100,
+            )
+        return calculated_duration

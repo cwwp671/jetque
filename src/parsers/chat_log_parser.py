@@ -3,14 +3,14 @@
 import logging
 from src.parsers.log_parser import LogParser
 from src.events.event_factory import EventFactory
-from src.events.event_handler import EventHandler
+from src.events.event_manager import EventManager
 
 
 class ChatLogParser(LogParser):
     """
     A class for parsing chat log files and forwarding relevant log lines to the event factory.
     """
-    def __init__(self, log_file_path: str, event_handler: EventHandler, event_factory: EventFactory) -> None:
+    def __init__(self, log_file_path: str, event_handler: EventManager, event_factory: EventFactory) -> None:
         logging.debug("Here")
         super().__init__(log_file_path, default_interval=5)
         self.event_handler = event_handler

@@ -1,4 +1,4 @@
-# src/animations/animation_controller.py
+# src/animations/animation_manager.py
 
 import logging
 from typing import Any, Dict, List
@@ -10,7 +10,7 @@ from src.animations.animation import Animation
 from src.animations.animation_factory import AnimationFactory
 
 
-class AnimationController(QObject):
+class AnimationManager(QObject):
     """
     Controller class responsible for managing all animations within the application.
 

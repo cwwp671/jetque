@@ -1,8 +1,7 @@
-# jetque/src/views/main_window.py
+# src/views/main_window.py
 
 import sys
 import pdb
-import traceback
 import os
 import logging
 from PyQt6.QtWidgets import (
@@ -17,7 +16,7 @@ from src.views.system_tray import SystemTrayIcon
 from src.views.home_view import HomeView
 from src.views.overlays_view import OverlaysView
 from src.views.triggers_view import TriggersView
-from src.events.event_handler import EventHandler
+from src.events.event_manager import EventManager
 from src.workers.chat_log_parser_worker import ChatLogParserWorker
 from src.workers.dbg_log_parser_worker import DBGLogParserWorker
 from src.events.event import Event
@@ -42,7 +41,7 @@ class MainWindow(QMainWindow):
         self.test_log_simulation_enabled = False
         self.saved_chat_log_file = None
         self.overlay_manager = OverlayManager()
-        self.event_handler = EventHandler()
+        self.event_handler = EventManager()
 
         self.setup_icon()
         self.setup_ui()

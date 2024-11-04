@@ -3,7 +3,7 @@
 import logging
 from PyQt6.QtCore import QObject, QTimer
 from typing import List
-from src.utils.file_handler import FileHandler
+from src.utils.file_manager import FileManager
 from config.config_loader import load_config
 
 class LogParser(QObject):
@@ -13,7 +13,7 @@ class LogParser(QObject):
     def __init__(self, log_file_path: str, default_interval: int) -> None:
         logging.debug("Here")
         super().__init__()
-        self.file_handler = FileHandler(log_file_path)
+        self.file_handler = FileManager(log_file_path)
         self.is_running = False
         self.config = load_config()
         self.timer = QTimer()

@@ -1,10 +1,10 @@
-# jetque/src/utils/file_handler.py
+# jetque/src/utils/file_manager.py
 
 import os
 import logging
 from typing import List
 
-class FileHandler:
+class FileManager:
     """
     Handles the low-level file interactions such as reading lines, checking existence, and monitoring file size.
     """

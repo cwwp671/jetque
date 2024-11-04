@@ -1,4 +1,4 @@
-# jetque/src/events/event_handler.py
+# jetque/src/events/event_manager.py
 
 import logging
 import pdb
@@ -7,7 +7,7 @@ from PyQt6.QtCore import QObject, pyqtSignal
 from src.events.event import Event, CombatEvent, SkillEvent, AvoidanceEvent
 from config.debug_config import is_debug_mode
 
-class EventHandler(QObject):
+class EventManager(QObject):
     """
     Handles dispatching and processing of events from the queue to the appropriate areas.
     """
