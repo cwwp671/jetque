@@ -75,28 +75,6 @@ class ParabolaAnimation(DynamicAnimation):
             easing_style=easing_style
         )
 
-    def play(self) -> None:
-        """
-        Play the parabola animation.
-        """
-        try:
-            # Currently no unique ParabolaAnimation play logic
-            logging.info("ParabolaAnimation played.")
-            super().play()
-        except Exception as e:
-            logging.exception("Failed to play ParabolaAnimation: %s", e)
-
-    def stop(self) -> None:
-        """
-        Stop the parabola animation.
-        """
-        try:
-            # Currently no unique ParabolaAnimation stop logic
-            logging.info("ParabolaAnimation stopped.")
-            super().stop()
-        except Exception as e:
-            logging.exception("Failed to stop ParabolaAnimation: %s", e)
-
     def _setup_animations(self) -> None:
         """
         Set up the parabolic animation settings and groups.
@@ -107,14 +85,3 @@ class ParabolaAnimation(DynamicAnimation):
             super()._setup_animations()
         except Exception as e:
             logging.exception("Failed to set up ParabolaAnimation animations: %s", e)
-
-    def _connect_signals(self) -> None:
-        """
-        Connect parabola animation signals to handlers.
-        """
-        try:
-            # Currently no unique ParabolaAnimation setup logic
-            logging.debug("ParabolaAnimation signals connected.")
-            super()._connect_signals()
-        except Exception as e:
-            logging.exception("Failed to connect ParabolaAnimation signals: %s", e)

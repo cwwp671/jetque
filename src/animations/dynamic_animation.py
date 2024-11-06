@@ -75,28 +75,6 @@ class DynamicAnimation(Animation):
             label=label
         )
 
-    def play(self) -> None:
-        """
-        Play the dynamic animation.
-        """
-        try:
-            # Currently no unique DynamicAnimation play logic
-            logging.info("DynamicAnimation played.")
-            super().play()
-        except Exception as e:
-            logging.exception("Failed to play DynamicAnimation: %s", e)
-
-    def stop(self) -> None:
-        """
-        Stop the dynamic animation.
-        """
-        try:
-            # Currently no unique DynamicAnimation stop logic
-            logging.info("DynamicAnimation stopped.")
-            super().stop()
-        except Exception as e:
-            logging.exception("Failed to stop DynamicAnimation: %s", e)
-
     def _setup_animations(self) -> None:
         """
         Set up the dynamic animation settings and groups.
@@ -109,14 +87,3 @@ class DynamicAnimation(Animation):
             super()._setup_animations()
         except Exception as e:
             logging.exception("Error setting up DynamicAnimation: %s", e)
-
-    def _connect_signals(self) -> None:
-        """
-        Connect any necessary dynamic animation signals to handlers.
-        """
-        try:
-            # Currently no unique dynamic signal logic
-            logging.debug("Signals connected for DynamicAnimation")
-            super()._connect_signals()
-        except Exception as e:
-            logging.exception("Failed to connect DynamicAnimation signals: %s", e)
