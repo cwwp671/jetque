@@ -1,7 +1,7 @@
 # src/animations/animation_factory.py
 
 import logging
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional
 
 from PyQt6.QtCore import QEasingCurve, QPointF, QUrl, QObject
 from PyQt6.QtGui import QPixmap
@@ -116,7 +116,10 @@ class AnimationFactory:
             fade_in: bool = config.get("fade_in", False)
             fade_out: bool = config.get("fade_out", False)
             fade_in_percentage: float = config.get("fade_in_percentage", 0.0)
+            fade_in_duration: int = self._get_fade_duration(duration, fade_in_percentage)
             fade_out_percentage: float = config.get("fade_out_percentage", 0.0)
+            fade_out_duration: int = self._get_fade_duration(duration, fade_out_percentage)
+            fade_out_delay: int = self._get_fade_out_delay(duration, fade_out_duration)
 
             fade_in_easing_style: QEasingCurve.Type = self.EASING_MAP.get(
                 config.get("fade_in_easing_style", "Linear"),
@@ -149,12 +152,12 @@ class AnimationFactory:
             if parent_type == "Dynamic":
                 return self._build_dynamic_animation(config, parent, animation_type, sound,
                                                      duration, starting_position, fade_in, fade_out,
-                                                     fade_in_percentage, fade_out_percentage,
+                                                     fade_in_duration, fade_out_duration, fade_out_delay,
                                                      fade_in_easing_style, fade_out_easing_style, label)
             elif parent_type == "Static":
                 return self._build_static_animation(config, parent, animation_type, sound,
                                                     duration, starting_position, fade_in, fade_out,
-                                                    fade_in_percentage, fade_out_percentage,
+                                                    fade_in_duration, fade_out_duration, fade_out_delay,
                                                     fade_in_easing_style, fade_out_easing_style, label)
             else:
                 logging.error("Unknown animation type: %s", animation_type)
@@ -174,8 +177,9 @@ class AnimationFactory:
             starting_position: QPointF,
             fade_in: bool,
             fade_out: bool,
-            fade_in_percentage: float,
-            fade_out_percentage: float,
+            fade_in_duration: int,
+            fade_out_duration: int,
+            fade_out_delay: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
             label: AnimationLabel
@@ -191,8 +195,9 @@ class AnimationFactory:
             starting_position (QPointF): Starting position of the animation.
             fade_in (bool): Whether to fade in.
             fade_out (bool): Whether to fade out.
-            fade_in_percentage (float): Fade in percentage.
-            fade_out_percentage (float): Fade out percentage.
+            fade_in_duration (int): Fade in duration.
+            fade_out_duration (int): Fade out duration.
+            fade_out_delay (int): Fade out delay.
             fade_in_easing_style (QEasingCurve.Type): Easing style for fade in.
             fade_out_easing_style (QEasingCurve.Type): Easing style for fade out.
             label (AnimationLabel): Label associated with the animation.
@@ -204,10 +209,11 @@ class AnimationFactory:
             ending_position: QPointF = self.POSITION_MAP.get(
                 config.get("ending_position", "Top-Left")
             )
-            direction: Tuple[float, float] = (
+            """ Can't find a purpose for this, yet
+                direction: Tuple[float, float] = (
                 self.DIRECTION_MAP.get(config.get("horizontal_direction", "Right"), 1.0),
                 self.DIRECTION_MAP.get(config.get("vertical_direction", "Down"), 1.0)
-            )
+            )"""
             easing_style: QEasingCurve.Type = self.EASING_MAP.get(
                 config.get("easing_style", "Linear"),
                 QEasingCurve.Type.Linear
@@ -222,13 +228,13 @@ class AnimationFactory:
                     starting_position=starting_position,
                     fade_in=fade_in,
                     fade_out=fade_out,
-                    fade_in_percentage=fade_in_percentage,
-                    fade_out_percentage=fade_out_percentage,
+                    fade_in_duration=fade_in_duration,
+                    fade_out_duration=fade_out_duration,
+                    fade_out_delay=fade_out_delay,
                     fade_in_easing_style=fade_in_easing_style,
                     fade_out_easing_style=fade_out_easing_style,
                     label=label,
                     ending_position=ending_position,
-                    direction=direction,
                     easing_style=easing_style
                 )
             elif animation_type == "Parabola":
@@ -241,13 +247,12 @@ class AnimationFactory:
                     starting_position=starting_position,
                     fade_in=fade_in,
                     fade_out=fade_out,
-                    fade_in_percentage=fade_in_percentage,
-                    fade_out_percentage=fade_out_percentage,
+                    fade_in_duration=fade_in_duration,
+                    fade_out_duration=fade_out_duration,
                     fade_in_easing_style=fade_in_easing_style,
                     fade_out_easing_style=fade_out_easing_style,
                     label=label,
                     ending_position=ending_position,
-                    direction=direction,
                     easing_style=easing_style,
                     vertex_position=vertex_position
                 )
@@ -267,13 +272,12 @@ class AnimationFactory:
                     starting_position=starting_position,
                     fade_in=fade_in,
                     fade_out=fade_out,
-                    fade_in_percentage=fade_in_percentage,
-                    fade_out_percentage=fade_out_percentage,
+                    fade_in_duration=fade_in_duration,
+                    fade_out_duration=fade_out_duration,
                     fade_in_easing_style=fade_in_easing_style,
                     fade_out_easing_style=fade_out_easing_style,
                     label=label,
                     ending_position=ending_position,
-                    direction=direction,
                     easing_style=easing_style,
                     phase_1_duration=self._calculate_phase_duration(duration, phase_1_percentage),
                     phase_2_duration=self._calculate_phase_duration(duration, phase_2_percentage),
@@ -300,8 +304,8 @@ class AnimationFactory:
             starting_position: QPointF,
             fade_in: bool,
             fade_out: bool,
-            fade_in_percentage: float,
-            fade_out_percentage: float,
+            fade_in_duration: int,
+            fade_out_duration: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
             label: AnimationLabel
@@ -317,8 +321,8 @@ class AnimationFactory:
             starting_position (QPointF): Starting position of the animation.
             fade_in (bool): Whether to fade in.
             fade_out (bool): Whether to fade out.
-            fade_in_percentage (float): Fade in percentage.
-            fade_out_percentage (float): Fade out percentage.
+            fade_in_duration (int): Fade in duration.
+            fade_out_duration (int): Fade out duration.
             fade_in_easing_style (QEasingCurve.Type): Easing style for fade in.
             fade_out_easing_style (QEasingCurve.Type): Easing style for fade out.
             label (AnimationLabel): Label associated with the animation.
@@ -339,8 +343,8 @@ class AnimationFactory:
                     starting_position=starting_position,
                     fade_in=fade_in,
                     fade_out=fade_out,
-                    fade_in_percentage=fade_in_percentage,
-                    fade_out_percentage=fade_out_percentage,
+                    fade_in_duration=fade_in_duration,
+                    fade_out_duration=fade_out_duration,
                     fade_in_easing_style=fade_in_easing_style,
                     fade_out_easing_style=fade_out_easing_style,
                     label=label,
@@ -363,8 +367,8 @@ class AnimationFactory:
                     starting_position=starting_position,
                     fade_in=fade_in,
                     fade_out=fade_out,
-                    fade_in_percentage=fade_in_percentage,
-                    fade_out_percentage=fade_out_percentage,
+                    fade_in_duration=fade_in_duration,
+                    fade_out_duration=fade_out_duration,
                     fade_in_easing_style=fade_in_easing_style,
                     fade_out_easing_style=fade_out_easing_style,
                     label=label,
@@ -450,6 +454,26 @@ class AnimationFactory:
         """
         # TODO: Implement logic to retrieve the appropriate parent QWidget
         return QWidget()
+
+    @staticmethod
+    def _get_fade_duration(duration: int, percentage: float) -> int:
+        """
+        Get the phase duration of a faded in or out animation
+
+        Returns:
+            fade_duration (int): The phase duration of a faded in or out animation.
+        """
+        return int(duration * percentage)
+
+    @staticmethod
+    def _get_fade_out_delay(duration: int, fade_out_duration: int) -> int:
+        """
+        Get the millisecond delay of a fade-out animation
+
+        Returns:
+            fade_out_delay (int): The millisecond delay of a fade-out animation
+        """
+        return duration - fade_out_duration
 
     @staticmethod
     def _get_swivel_position(starting_position: QPointF, ending_position: QPointF, percentage: float) -> QPointF:

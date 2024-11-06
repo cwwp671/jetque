@@ -60,6 +60,10 @@ class SwivelAnimation(DynamicAnimation):
             phase_2_duration (int): The duration of phase 2
             swivel_position (QPointF): The Swivel position for the animation.
         """
+        self.phase_1_duration: int = phase_1_duration
+        self.phase_2_duration: int = phase_2_duration
+        self.swivel_position: QPointF = swivel_position
+        self.animation_group: QSequentialAnimationGroup = QSequentialAnimationGroup()
         super().__init__(
             parent=parent,
             animation_type=animation_type,
@@ -77,10 +81,6 @@ class SwivelAnimation(DynamicAnimation):
             direction=direction,
             easing_style=easing_style
         )
-        self.phase_1_duration: int = phase_1_duration
-        self.phase_2_duration: int = phase_2_duration
-        self.swivel_position: QPointF = swivel_position
-        self.animation_group: QSequentialAnimationGroup = QSequentialAnimationGroup()
         logging.debug("SwivelAnimation initialized.")
 
     def play(self) -> None:
@@ -89,6 +89,7 @@ class SwivelAnimation(DynamicAnimation):
         """
         try:
             self.play_sound()
+            self.label.show()
             self.animation_group.start()
             logging.info("SwivelAnimation started.")
         except Exception as e:
@@ -128,7 +129,6 @@ class SwivelAnimation(DynamicAnimation):
             # Add animations to the group
             self.animation_group.addAnimation(phase_1_animation)
             self.animation_group.addAnimation(phase_2_animation)
-            self.animation_group.finished.connect(self.finished.emit)
             logging.debug("SwivelAnimation animations set up.")
         except Exception as e:
             logging.exception("Failed to set up SwivelAnimation animations: %s", e)
@@ -139,7 +139,7 @@ class SwivelAnimation(DynamicAnimation):
         """
         try:
             super()._connect_signals()
-            # Additional signal connections can be added here if needed
+            self.animation_group.finished.connect(self.finished.emit)
             logging.debug("SwivelAnimation signals connected.")
         except Exception as e:
             logging.exception("Failed to connect SwivelAnimation signals: %s", e)

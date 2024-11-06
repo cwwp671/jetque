@@ -3,7 +3,8 @@
 import logging
 from abc import abstractmethod
 
-from PyQt6.QtCore import QObject, QEasingCurve, QPointF
+from PyQt6.QtCore import QObject, QEasingCurve, QPointF, QParallelAnimationGroup, QPropertyAnimation, \
+    QSequentialAnimationGroup
 from PyQt6.QtMultimedia import QSoundEffect
 
 from src.animations.animation import Animation
@@ -55,6 +56,8 @@ class StaticAnimation(Animation):
             jiggle (bool): Whether the jiggle effect is enabled.
             jiggle_intensity (float): The intensity of the jiggle effect.
         """
+        self.jiggle: bool = jiggle
+        self.jiggle_intensity: float = jiggle_intensity
         super().__init__(
             parent=parent,
             animation_type=animation_type,
@@ -69,39 +72,34 @@ class StaticAnimation(Animation):
             fade_out_easing_style=fade_out_easing_style,
             label=label
         )
-        self.jiggle: bool = jiggle
-        self.jiggle_intensity: float = jiggle_intensity
-
-        # Initializes any static-specific attributes
-        logging.debug(
-            "StaticAnimation initialized with jiggle=%s, jiggle_intensity=%f",
-            self.jiggle,
-            self.jiggle_intensity
-        )
+        logging.debug("StaticAnimation initialized.")
 
     @abstractmethod
     def play(self) -> None:
         """
         Start the static animation.
+        Must be implemented by subclasses.
         """
-        # Implement common logic or override in subclasses
         pass
 
     @abstractmethod
     def stop(self) -> None:
         """
         Stop the static animation.
+        Must be implemented by subclasses.
         """
-        # Implement common logic or override in subclasses
         pass
 
-    @abstractmethod
     def setup_animations(self) -> None:
         """
-        Set up the static animations.
+        Set up the static animation settings and groups.
         """
-        # Implement common logic or override in subclasses
-        pass
+        logging.debug("Setting up StaticAnimation animations.")
+        try:
+            super().setup_animations()
+            logging.debug("StaticAnimation animations set up.")
+        except Exception as e:
+            logging.exception("Error setting up StaticAnimation animations: %s", e)
 
     def _apply_jiggle(self) -> None:
         """
@@ -116,6 +114,7 @@ class StaticAnimation(Animation):
         """
         try:
             super()._connect_signals()
+            self.animation_group.finished.connect(self.finished.emit)
             logging.debug("Signals connected for StaticAnimation")
         except Exception as e:
             logging.exception("Failed to connect signals: %s", e)

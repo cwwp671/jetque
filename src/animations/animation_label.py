@@ -68,6 +68,7 @@ class AnimationLabel(QLabel):
             font_underline (bool): Underline the font.
             icon_position (str): Position of the icon ('left' or 'right').
         """
+        self.hide()  # Don't want to be visible until animation starts
         super().__init__(parent)
         self._font_type: str = font_type
         self._font_size: int = font_size

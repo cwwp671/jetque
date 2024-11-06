@@ -10,8 +10,9 @@ File: src.animations.statics.pow_animation.py
 
         Methods:
 			__init__(parameters supplied from config / AnimationFactory)
+                # Initializes any pow specific attributes before the super
 				# Super the Parent Init
-                # Initializes any pow specific attributes
+
             play()
                 # Plays the animations involved
             stop()
