@@ -1,10 +1,12 @@
 # src/animations/dynamics/parabola_animation.py
 
 import logging
+from typing import List
 
 from PyQt6.QtCore import QEasingCurve, QPointF, QObject
 from PyQt6.QtMultimedia import QSoundEffect
 
+from src.animations.animation_point_f import AnimationPointF
 from src.animations.dynamic_animation import DynamicAnimation
 from src.animations.animation_label import AnimationLabel
 
@@ -32,7 +34,7 @@ class ParabolaAnimation(DynamicAnimation):
             label: AnimationLabel,
             ending_position: QPointF,
             easing_style: QEasingCurve.Type,
-            vertex_position: QPointF
+            parabola_points: List[AnimationPointF]
     ) -> None:
         """
         Initialize the ParabolaAnimation with the given parameters.
@@ -53,9 +55,9 @@ class ParabolaAnimation(DynamicAnimation):
             label (AnimationLabel): The label associated with the animation.
             ending_position (QPointF): The ending position of the animation.
             easing_style (QEasingCurve.Type): The easing curve type for the animation.
-            vertex_position (QPointF): The vertex position of the animation.
+            parabola_points (List[AnimationPointF]): The positions along the curve of the animation.
         """
-        self.vertex_position: QPointF = vertex_position
+        self.parabola_points: List[AnimationPointF] = parabola_points
         logging.debug("ParabolaAnimation initialized.")
         super().__init__(
             parent=parent,
@@ -80,7 +82,9 @@ class ParabolaAnimation(DynamicAnimation):
         Set up the parabolic animation settings and groups.
         """
         try:
-            self.animation.setKeyValueAt(0.5, self.vertex_position)
+            for point in self.parabola_points:
+                self.animation.setKeyValueAt(point.key_value, point)
+
             logging.debug("ParabolaAnimation animations set up.")
             super()._setup_animations()
         except Exception as e:

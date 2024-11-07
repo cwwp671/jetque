@@ -1,7 +1,7 @@
 # src/animations/animation_factory.py
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 from PyQt6.QtCore import QEasingCurve, QPointF, QUrl, QObject
 from PyQt6.QtGui import QPixmap
@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import QWidget
 
 from src.animations.animation import Animation
 from src.animations.animation_label import AnimationLabel
+from src.animations.animation_point_f import AnimationPointF
 from src.animations.dynamics.directional_animation import DirectionalAnimation
 from src.animations.dynamics.parabola_animation import ParabolaAnimation
 from src.animations.dynamics.swivel_animation import SwivelAnimation
@@ -17,6 +18,7 @@ from src.animations.statics.stationary_animation import StationaryAnimation
 from src.animations.statics.pow_animation import PowAnimation
 
 # Constants
+DEFAULT_FRAMERATE: int = 60
 TEMPORARY_WIDGET_WIDTH: float = 500.0  # Temporary width until specific overlays are passed
 TEMPORARY_WIDGET_HEIGHT: float = 600.0  # Temporary height until specific overlays are passed
 
@@ -239,6 +241,12 @@ class AnimationFactory:
                 )
             elif animation_type == "Parabola":
                 vertex_position: QPointF = self._get_vertex_position(starting_position, ending_position)
+                parabola_points: List[AnimationPointF] = self._generate_parabola_data(
+                    starting_position,
+                    vertex_position,
+                    ending_position,
+                    self._get_total_parabola_points(duration, DEFAULT_FRAMERATE)
+                )
                 animation = ParabolaAnimation(
                     parent=parent,
                     animation_type=animation_type,
@@ -249,12 +257,13 @@ class AnimationFactory:
                     fade_out=fade_out,
                     fade_in_duration=fade_in_duration,
                     fade_out_duration=fade_out_duration,
+                    fade_out_delay=fade_out_delay,
                     fade_in_easing_style=fade_in_easing_style,
                     fade_out_easing_style=fade_out_easing_style,
                     label=label,
                     ending_position=ending_position,
                     easing_style=easing_style,
-                    vertex_position=vertex_position
+                    parabola_points=parabola_points
                 )
             elif animation_type == "Swivel":
                 phase_1_percentage: float = config.get("phase_1_percentage", 0.50)
@@ -274,6 +283,7 @@ class AnimationFactory:
                     fade_out=fade_out,
                     fade_in_duration=fade_in_duration,
                     fade_out_duration=fade_out_duration,
+                    fade_out_delay=fade_out_delay,
                     fade_in_easing_style=fade_in_easing_style,
                     fade_out_easing_style=fade_out_easing_style,
                     label=label,
@@ -306,6 +316,7 @@ class AnimationFactory:
             fade_out: bool,
             fade_in_duration: int,
             fade_out_duration: int,
+            fade_out_delay: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
             label: AnimationLabel
@@ -323,6 +334,7 @@ class AnimationFactory:
             fade_out (bool): Whether to fade out.
             fade_in_duration (int): Fade in duration.
             fade_out_duration (int): Fade out duration.
+            fade_out_delay (int): Fade out delay.
             fade_in_easing_style (QEasingCurve.Type): Easing style for fade in.
             fade_out_easing_style (QEasingCurve.Type): Easing style for fade out.
             label (AnimationLabel): Label associated with the animation.
@@ -345,6 +357,7 @@ class AnimationFactory:
                     fade_out=fade_out,
                     fade_in_duration=fade_in_duration,
                     fade_out_duration=fade_out_duration,
+                    fade_out_delay=fade_out_delay,
                     fade_in_easing_style=fade_in_easing_style,
                     fade_out_easing_style=fade_out_easing_style,
                     label=label,
@@ -369,6 +382,7 @@ class AnimationFactory:
                     fade_out=fade_out,
                     fade_in_duration=fade_in_duration,
                     fade_out_duration=fade_out_duration,
+                    fade_out_delay=fade_out_delay,
                     fade_in_easing_style=fade_in_easing_style,
                     fade_out_easing_style=fade_out_easing_style,
                     label=label,
@@ -519,6 +533,127 @@ class AnimationFactory:
             logging.exception("Failed to calculate vertex position: %s", e)
 
     @staticmethod
+    def _get_total_parabola_points(duration: int, fps: int = DEFAULT_FRAMERATE) -> int:
+        return int(float(duration / 1000.0) * fps)
+
+    @staticmethod
+    def _generate_parabola_data(
+            starting_position: QPointF,
+            vertex_position: QPointF,
+            ending_position: QPointF,
+            num_points: int
+    ) -> List[AnimationPointF]:
+        """
+        Generate evenly spaced AnimationPointF points along a parabola with their position percentages.
+
+        Parameters:
+            starting_position (QPointF): The starting point of the parabola.
+            vertex_position (QPointF): The vertex point of the parabola.
+            ending_position (QPointF): The ending point of the parabola.
+            num_points (int): The number of points to generate.
+
+        Returns:
+            List[AnimationPointF]: A list of AnimationPointF objects evenly spaced along the parabola curve,
+                                    each with an associated key_value between 0.0 and 1.0.
+        """
+        try:
+            logging.debug("Starting generation of parabola data with %d points.", num_points)
+
+            # Validate input
+            if num_points < 2:
+                logging.warning("num_points is less than 2. Returning start and end points only.")
+                return [
+                    AnimationPointF(starting_position.x(), starting_position.y(), 0.0),
+                    AnimationPointF(ending_position.x(), ending_position.y(), 1.0)
+                ]
+
+            # Calculate quadratic coefficients using vertex form: y = a(x - h)^2 + k
+            h: float = vertex_position.x()
+            k: float = vertex_position.y()
+            try:
+                denominator: float = (starting_position.x() - h) ** 2
+                a: float = (starting_position.y() - k) / denominator
+                b: float = -2.0 * a * h
+                c: float = a * h ** 2.0 + k
+                logging.debug("Quadratic coefficients calculated: a=%.6f, b=%.6f, c=%.6f", a, b, c)
+            except ZeroDivisionError:
+                logging.exception("Division by zero when calculating quadratic coefficients. Using default y = x^2.")
+                a, b, c = 1.0, 0.0, 0.0
+
+            # Precompute a fine grid of points to approximate arc length
+            steps: int = 1000
+            x_start: float = starting_position.x()
+            x_end: float = ending_position.x()
+            dx: float = (x_end - x_start) / steps
+            x_values: List[float] = [x_start + i * dx for i in range(steps + 1)]
+            y_values: List[float] = [a * x ** 2.0 + b * x + c for x in x_values]
+
+            # Compute cumulative arc length
+            cumulative_lengths: List[float] = [0.0]
+            for i in range(1, len(x_values)):
+                dx_segment: float = x_values[i] - x_values[i - 1]
+                dy_segment: float = y_values[i] - y_values[i - 1]
+                segment_length: float = (dx_segment ** 2.0 + dy_segment ** 2.0) ** 0.5
+                cumulative_lengths.append(cumulative_lengths[-1] + segment_length)
+
+            total_length: float = cumulative_lengths[-1]
+            logging.debug("Total arc length approximated: %.6f", total_length)
+
+            # Desired spacing between points
+            spacing: float = float(total_length / (num_points - 1))
+            logging.debug("Desired spacing between points: %.6f", spacing)
+
+            # Function to find the x for a given target length using binary search
+            def _find_x(target_len: float) -> float:
+                left: int = 0
+                right: int = len(cumulative_lengths) - 1
+                while left <= right:
+                    mid: int = (left + right) // 2
+                    current_length: float = cumulative_lengths[mid]
+                    if current_length < target_len:
+                        left = mid + 1
+                    else:
+                        right = mid - 1
+                if left == 0:
+                    return x_values[0]
+                elif left >= len(cumulative_lengths):
+                    return x_values[-1]
+                else:
+                    length_before: float = cumulative_lengths[left - 1]
+                    length_after: float = cumulative_lengths[left]
+                    ratio: float = ((target_len - length_before) /
+                                    (length_after - length_before)
+                                    if (length_after - length_before) != 0.0
+                                    else 0.0
+                                    )
+                    interpolated_x: float = x_values[left - 1] + ratio * (x_values[left] - x_values[left - 1])
+                    return interpolated_x
+
+            # Generate points
+            animation_points: List[AnimationPointF] = []
+            for i in range(num_points):
+                target_length: float = spacing * i
+                x: float = _find_x(target_length)
+                y: float = a * x ** 2.0 + b * x + c
+                key_value: float = (target_length / total_length) if total_length != 0 else 0.0
+                animation_point: AnimationPointF = AnimationPointF(x, y, key_value)
+                animation_points.append(animation_point)
+                logging.debug(
+                    "Added point %d: (%.6f, %.6f) with key_value %.6f",
+                    i, x, y, key_value
+                )
+
+            return animation_points
+
+        except Exception as e:
+            logging.exception(f"Failed to generate parabola data: {e}")
+            # Return default start and end points with corresponding key_values
+            return [
+                AnimationPointF(starting_position.x(), starting_position.y(), 0.0),
+                AnimationPointF(ending_position.x(), ending_position.y(), 1.0)
+            ]
+
+    @staticmethod
     def _calculate_phase_duration(duration: int, percentage: float) -> int:
         """
         Calculate the duration of a phase based on the total duration and percentage.
@@ -530,9 +665,9 @@ class AnimationFactory:
         Returns:
             int: The calculated duration for the phase in milliseconds.
         """
-        if not (0 < percentage < 1):
+        if not (0.0 < percentage < 1.0):
             logging.warning(
-                "Percentage %.2f is out of bounds (0 < percentage < 1). "
+                "Percentage %.2f is out of bounds (0.0 < percentage < 1.0). "
                 "Defaulting to 0.5.", percentage
             )
             percentage = 0.5  # Default to 50% if out of bounds

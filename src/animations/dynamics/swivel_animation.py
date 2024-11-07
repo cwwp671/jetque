@@ -1,9 +1,8 @@
 # src/animations/dynamics/swivel_animation.py
 
 import logging
-from typing import Tuple
 
-from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation, QObject, QSequentialAnimationGroup
+from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation, QObject
 from PyQt6.QtMultimedia import QSoundEffect
 
 from src.animations.dynamic_animation import DynamicAnimation
@@ -25,13 +24,13 @@ class SwivelAnimation(DynamicAnimation):
             starting_position: QPointF,
             fade_in: bool,
             fade_out: bool,
-            fade_in_percentage: float,
-            fade_out_percentage: float,
+            fade_in_duration: int,
+            fade_out_duration: int,
+            fade_out_delay: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
             label: AnimationLabel,
             ending_position: QPointF,
-            direction: Tuple[float, float],
             easing_style: QEasingCurve.Type,
             phase_1_duration: int,
             phase_2_duration: int,
@@ -48,13 +47,13 @@ class SwivelAnimation(DynamicAnimation):
             starting_position (QPointF): The starting position of the animation.
             fade_in (bool): Whether the animation fades in.
             fade_out (bool): Whether the animation fades out.
-            fade_in_percentage (float): The percentage of duration for fade-in.
-            fade_out_percentage (float): The percentage of duration for fade-out.
+            fade_in_duration (int): The duration for fade-in in milliseconds.
+            fade_out_duration (int): The duration for fade-out in milliseconds.
+            fade_out_delay (int): The fade-out delay in milliseconds.
             fade_in_easing_style (QEasingCurve.Type): The easing curve for fade-in.
             fade_out_easing_style (QEasingCurve.Type): The easing curve for fade-out.
             label (AnimationLabel): The label associated with the animation.
             ending_position (QPointF): The ending position of the animation.
-            direction (Tuple[float, float]): The direction multiplier (x, y).
             easing_style (QEasingCurve.Type): The easing curve type for the animation.
             phase_1_duration (int): The duration of phase 1
             phase_2_duration (int): The duration of phase 2
@@ -63,7 +62,8 @@ class SwivelAnimation(DynamicAnimation):
         self.phase_1_duration: int = phase_1_duration
         self.phase_2_duration: int = phase_2_duration
         self.swivel_position: QPointF = swivel_position
-        self.animation_group: QSequentialAnimationGroup = QSequentialAnimationGroup()
+        self.animation2 = QPropertyAnimation(self.label, b"pos")
+        logging.debug("SwivelAnimation initialized.")
         super().__init__(
             parent=parent,
             animation_type=animation_type,
@@ -72,85 +72,31 @@ class SwivelAnimation(DynamicAnimation):
             starting_position=starting_position,
             fade_in=fade_in,
             fade_out=fade_out,
-            fade_in_percentage=fade_in_percentage,
-            fade_out_percentage=fade_out_percentage,
+            fade_in_duration=fade_in_duration,
+            fade_out_duration=fade_out_duration,
+            fade_out_delay=fade_out_delay,
             fade_in_easing_style=fade_in_easing_style,
             fade_out_easing_style=fade_out_easing_style,
             label=label,
             ending_position=ending_position,
-            direction=direction,
             easing_style=easing_style
         )
-        logging.debug("SwivelAnimation initialized.")
-
-    def play(self) -> None:
-        """
-        Start the swivel animation.
-        """
-        try:
-            self.play_sound()
-            self.label.show()
-            self.animation_group.start()
-            logging.info("SwivelAnimation started.")
-        except Exception as e:
-            logging.exception("Failed to play SwivelAnimation: %s", e)
-
-    def stop(self) -> None:
-        """
-        Stop the swivel animation.
-        """
-        try:
-            self.animation_group.stop()
-            logging.info("SwivelAnimation stopped.")
-        except Exception as e:
-            logging.exception("Failed to stop SwivelAnimation: %s", e)
 
     def setup_animations(self) -> None:
         """
         Set up the swivel animation settings and groups.
         """
         try:
-            # Phase 1 Animation
-            phase_1_animation = QPropertyAnimation(self.label, b"pos")
-            phase_1_animation.setDuration(self.phase_1_duration)
-            phase_1_animation.setStartValue(self.starting_position)
-            phase_1_animation.setEndValue(self.swivel_position)
-            phase_1_animation.setEasingCurve(self.easing_style)
+            super()._setup_animations()
+            self.animation.setDuration(self.phase_1_duration)
+            self.animation.setEndValue(self.swivel_position)
             logging.debug("Phase 1 animation set up with duration %d ms.", self.phase_1_duration)
-
-            # Phase 2 Animation
-            phase_2_animation = QPropertyAnimation(self.label, b"pos")
-            phase_2_animation.setDuration(self.phase_2_duration)
-            phase_2_animation.setStartValue(self.swivel_position)
-            phase_2_animation.setEndValue(self.ending_position)
-            phase_2_animation.setEasingCurve(self.easing_style)
+            self.animation2.setDuration(self.phase_2_duration)
+            self.animation2.setStartValue(self.swivel_position)
+            self.animation2.setEndValue(self.ending_position)
+            self.animation2.setEasingCurve(self.easing_style)
             logging.debug("Phase 2 animation set up with duration %d ms.", self.phase_2_duration)
-
-            # Add animations to the group
-            self.animation_group.addAnimation(phase_1_animation)
-            self.animation_group.addAnimation(phase_2_animation)
+            self.animation_group.addAnimation(self.animation2)
             logging.debug("SwivelAnimation animations set up.")
         except Exception as e:
             logging.exception("Failed to set up SwivelAnimation animations: %s", e)
-
-    def _connect_signals(self) -> None:
-        """
-        Connect swivel animation signals to handlers.
-        """
-        try:
-            super()._connect_signals()
-            self.animation_group.finished.connect(self.finished.emit)
-            logging.debug("SwivelAnimation signals connected.")
-        except Exception as e:
-            logging.exception("Failed to connect SwivelAnimation signals: %s", e)
-
-    def _connect_slots(self) -> None:
-        """
-        Connect swivel animation slots to handlers.
-        """
-        try:
-            super()._connect_slots()
-            # Additional slot connections can be added here if needed
-            logging.debug("SwivelAnimation slots connected.")
-        except Exception as e:
-            logging.exception("Failed to connect SwivelAnimation slots: %s", e)

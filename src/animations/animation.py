@@ -121,7 +121,7 @@ class Animation(QObject):
                 self.fade_out_animation.setStartValue(1.0)
                 self.fade_out_animation.setEndValue(0.0)
                 self.fade_out_animation.setEasingCurve(self.fade_out_easing_style)
-                self.fade_out_group.addPause(self.fade_out_delay)  # Sequential group: first pause, then fade out
+                self.fade_out_group.addPause(self.fade_out_delay)
                 self.fade_out_group.addAnimation(self.fade_out_animation)
                 self.animation_group.addAnimation(self.fade_out_group)
 

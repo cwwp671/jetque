@@ -54,7 +54,6 @@ class DirectionalAnimation(DynamicAnimation):
             ending_position (QPointF): The ending position of the animation.
             easing_style (QEasingCurve.Type): The easing curve type for the animation.
         """
-        # Currently no unique DirectionalAnimation init logic
         logging.debug("DirectionalAnimation initialized.")
         super().__init__(
             parent=parent,
