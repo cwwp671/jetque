@@ -3,7 +3,7 @@
 import logging
 from typing import List
 
-from PyQt6.QtCore import QEasingCurve, QPointF, QObject
+from PyQt6.QtCore import QEasingCurve, QPointF
 from PyQt6.QtMultimedia import QSoundEffect
 
 from src.animations.animation_point_f import AnimationPointF
@@ -19,7 +19,6 @@ class ParabolaAnimation(DynamicAnimation):
 
     def __init__(
             self,
-            parent: QObject,
             animation_type: str,
             sound: QSoundEffect,
             duration: int,
@@ -34,13 +33,13 @@ class ParabolaAnimation(DynamicAnimation):
             label: AnimationLabel,
             ending_position: QPointF,
             easing_style: QEasingCurve.Type,
-            parabola_points: List[AnimationPointF]
+            parabola_points: List[AnimationPointF],
+            parent=None
     ) -> None:
         """
         Initialize the ParabolaAnimation with the given parameters.
 
         Args:
-            parent (QObject): The parent object.
             animation_type (str): The type of animation.
             sound (QSoundEffect): The sound effect to play.
             duration (int): The duration of the animation in milliseconds.
@@ -56,11 +55,9 @@ class ParabolaAnimation(DynamicAnimation):
             ending_position (QPointF): The ending position of the animation.
             easing_style (QEasingCurve.Type): The easing curve type for the animation.
             parabola_points (List[AnimationPointF]): The positions along the curve of the animation.
+            parent: The parent object.
         """
-        self.parabola_points: List[AnimationPointF] = parabola_points
-        logging.debug("ParabolaAnimation initialized.")
         super().__init__(
-            parent=parent,
             animation_type=animation_type,
             sound=sound,
             duration=duration,
@@ -74,18 +71,23 @@ class ParabolaAnimation(DynamicAnimation):
             fade_out_easing_style=fade_out_easing_style,
             label=label,
             ending_position=ending_position,
-            easing_style=easing_style
+            easing_style=easing_style,
+            parent=parent
         )
+
+        self.parabola_points: List[AnimationPointF] = parabola_points
 
     def _setup_animations(self) -> None:
         """
         Set up the parabolic animation settings and groups.
         """
         try:
+            super()._setup_animations()
+
             for point in self.parabola_points:
                 self.animation.setKeyValueAt(point.key_value, point)
 
-            logging.debug("ParabolaAnimation animations set up.")
-            super()._setup_animations()
+            logging.debug("ParabolaAnimation set up.")
+
         except Exception as e:
-            logging.exception("Failed to set up ParabolaAnimation animations: %s", e)
+            logging.exception("Failed to set up ParabolaAnimation: %s", e)

@@ -1,8 +1,6 @@
 # src/animations/dynamics/directional_animation.py
 
-import logging
-
-from PyQt6.QtCore import QEasingCurve, QPointF, QObject
+from PyQt6.QtCore import QEasingCurve, QPointF
 from PyQt6.QtMultimedia import QSoundEffect
 
 from src.animations.dynamic_animation import DynamicAnimation
@@ -18,7 +16,6 @@ class DirectionalAnimation(DynamicAnimation):
 
     def __init__(
             self,
-            parent: QObject,
             animation_type: str,
             sound: QSoundEffect,
             duration: int,
@@ -32,13 +29,13 @@ class DirectionalAnimation(DynamicAnimation):
             fade_out_easing_style: QEasingCurve.Type,
             label: AnimationLabel,
             ending_position: QPointF,
-            easing_style: QEasingCurve.Type
+            easing_style: QEasingCurve.Type,
+            parent=None
     ) -> None:
         """
         Initialize the DirectionalAnimation with the given parameters.
 
         Args:
-            parent (QObject): The parent object.
             animation_type (str): The type of animation.
             sound (QSoundEffect): The sound effect to play.
             duration (int): The duration of the animation in milliseconds.
@@ -53,10 +50,9 @@ class DirectionalAnimation(DynamicAnimation):
             label (AnimationLabel): The label associated with the animation.
             ending_position (QPointF): The ending position of the animation.
             easing_style (QEasingCurve.Type): The easing curve type for the animation.
+            parent: The parent object.
         """
-        logging.debug("DirectionalAnimation initialized.")
         super().__init__(
-            parent=parent,
             animation_type=animation_type,
             sound=sound,
             duration=duration,
@@ -70,5 +66,6 @@ class DirectionalAnimation(DynamicAnimation):
             fade_out_easing_style=fade_out_easing_style,
             label=label,
             ending_position=ending_position,
-            easing_style=easing_style
+            easing_style=easing_style,
+            parent=parent
         )

@@ -2,7 +2,7 @@
 
 import logging
 
-from PyQt6.QtCore import QObject, QEasingCurve, QPointF
+from PyQt6.QtCore import QEasingCurve, QPointF
 from PyQt6.QtMultimedia import QSoundEffect
 
 from src.animations.animation import Animation
@@ -20,7 +20,6 @@ class DynamicAnimation(Animation):
 
     def __init__(
             self,
-            parent: QObject,
             animation_type: str,
             sound: QSoundEffect,
             duration: int,
@@ -34,13 +33,13 @@ class DynamicAnimation(Animation):
             fade_out_easing_style: QEasingCurve.Type,
             label: AnimationLabel,
             ending_position: QPointF,
-            easing_style: QEasingCurve.Type
+            easing_style: QEasingCurve.Type,
+            parent=None
     ) -> None:
         """
         Initialize the DynamicAnimation with the given parameters.
 
         Args:
-            parent (QObject): The parent object.
             animation_type (str): The type of animation.
             sound (QSoundEffect): The sound effect to play.
             duration (int): The duration of the animation in milliseconds.
@@ -55,12 +54,9 @@ class DynamicAnimation(Animation):
             label (AnimationLabel): The label associated with the animation.
             ending_position (QPointF): The ending position of the animation.
             easing_style (QEasingCurve.Type): The easing curve type for the animation.
+            parent: The parent object.
         """
-        self.ending_position: QPointF = ending_position
-        self.easing_style: QEasingCurve.Type = easing_style
-        logging.debug("DynamicAnimation initialized.")
         super().__init__(
-            parent=parent,
             animation_type=animation_type,
             sound=sound,
             duration=duration,
@@ -72,18 +68,22 @@ class DynamicAnimation(Animation):
             fade_out_delay=fade_out_delay,
             fade_in_easing_style=fade_in_easing_style,
             fade_out_easing_style=fade_out_easing_style,
-            label=label
+            label=label,
+            parent=parent
         )
+
+        self.ending_position: QPointF = ending_position
+        self.easing_style: QEasingCurve.Type = easing_style
 
     def _setup_animations(self) -> None:
         """
         Set up the dynamic animation settings and groups.
         """
-        logging.debug("Setting up DynamicAnimation animations.")
+        logging.debug("Setting up DynamicAnimation.")
         try:
+            super()._setup_animations()
             self.animation.setEndValue(self.ending_position)
             self.animation.setEasingCurve(self.easing_style)
             logging.debug("DynamicAnimation animations set up.")
-            super()._setup_animations()
         except Exception as e:
             logging.exception("Error setting up DynamicAnimation: %s", e)

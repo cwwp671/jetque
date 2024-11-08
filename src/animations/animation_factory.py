@@ -23,7 +23,7 @@ TEMPORARY_WIDGET_WIDTH: float = 500.0  # Temporary width until specific overlays
 TEMPORARY_WIDGET_HEIGHT: float = 600.0  # Temporary height until specific overlays are passed
 
 
-class AnimationFactory:
+class AnimationFactory(QObject):
     """
     Factory class responsible for creating Animation instances based on configuration.
     """
@@ -91,10 +91,10 @@ class AnimationFactory:
         "Out-In-Bounce": QEasingCurve.Type.OutInBounce
     }
 
-    JIGGLE_MAP: Dict[str, float] = {
-        "Low": 0.075,
-        "Medium": 0.050,
-        "High": 0.025
+    JIGGLE_MAP: Dict[str, int] = {
+        "Low": 75,
+        "Medium": 50,
+        "High": 25
     }
 
     def build_animation(self, config: Dict[str, Any]) -> Optional[Animation]:
@@ -108,7 +108,7 @@ class AnimationFactory:
             Optional[Animation]: The created Animation instance or None if creation failed.
         """
         try:
-            parent: QObject = QObject()  # TODO: Temporary Parent variable. Needs actual parent widget.
+            parent = self.parent()
             animation_type: str = config.get("type")
             sound: QSoundEffect = self._get_sound_effect(config.get("sound"))
             duration: int = int(config.get("duration", 2.25) * 1000)
@@ -133,7 +133,6 @@ class AnimationFactory:
             )
 
             label: AnimationLabel = AnimationLabel(
-                parent=self._get_parent_widget(),
                 text=config.get("text"),
                 icon_pixmap=self._get_icon_pixmap(config.get("icon")),
                 font_type=config.get("font_type"),
@@ -145,22 +144,23 @@ class AnimationFactory:
                 font_italic=config.get("font_italic"),
                 font_bold=config.get("font_bold"),
                 font_underline=config.get("font_underline"),
-                icon_position=config.get("icon_position")
+                icon_position=config.get("icon_position"),
+                parent=self.parent()
             )
 
             logging.debug("Building animation of type: %s", animation_type)
 
             parent_type: str = self._get_animation_type_parent(animation_type)
             if parent_type == "Dynamic":
-                return self._build_dynamic_animation(config, parent, animation_type, sound,
+                return self._build_dynamic_animation(config, animation_type, sound,
                                                      duration, starting_position, fade_in, fade_out,
                                                      fade_in_duration, fade_out_duration, fade_out_delay,
-                                                     fade_in_easing_style, fade_out_easing_style, label)
+                                                     fade_in_easing_style, fade_out_easing_style, label, parent)
             elif parent_type == "Static":
-                return self._build_static_animation(config, parent, animation_type, sound,
+                return self._build_static_animation(config, animation_type, sound,
                                                     duration, starting_position, fade_in, fade_out,
                                                     fade_in_duration, fade_out_duration, fade_out_delay,
-                                                    fade_in_easing_style, fade_out_easing_style, label)
+                                                    fade_in_easing_style, fade_out_easing_style, label, parent)
             else:
                 logging.error("Unknown animation type: %s", animation_type)
                 return None
@@ -172,7 +172,6 @@ class AnimationFactory:
     def _build_dynamic_animation(
             self,
             config: Dict[str, Any],
-            parent: QObject,
             animation_type: str,
             sound: QSoundEffect,
             duration: int,
@@ -184,7 +183,8 @@ class AnimationFactory:
             fade_out_delay: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
-            label: AnimationLabel
+            label: AnimationLabel,
+            parent=None
     ) -> Optional[Animation]:
         """
         Builds a dynamic type Animation instance.
@@ -223,32 +223,6 @@ class AnimationFactory:
 
             if animation_type == "Directional":
                 animation = DirectionalAnimation(
-                    parent=parent,
-                    animation_type=animation_type,
-                    sound=sound,
-                    duration=duration,
-                    starting_position=starting_position,
-                    fade_in=fade_in,
-                    fade_out=fade_out,
-                    fade_in_duration=fade_in_duration,
-                    fade_out_duration=fade_out_duration,
-                    fade_out_delay=fade_out_delay,
-                    fade_in_easing_style=fade_in_easing_style,
-                    fade_out_easing_style=fade_out_easing_style,
-                    label=label,
-                    ending_position=ending_position,
-                    easing_style=easing_style
-                )
-            elif animation_type == "Parabola":
-                vertex_position: QPointF = self._get_vertex_position(starting_position, ending_position)
-                parabola_points: List[AnimationPointF] = self._generate_parabola_data(
-                    starting_position,
-                    vertex_position,
-                    ending_position,
-                    self._get_total_parabola_points(duration, DEFAULT_FRAMERATE)
-                )
-                animation = ParabolaAnimation(
-                    parent=parent,
                     animation_type=animation_type,
                     sound=sound,
                     duration=duration,
@@ -263,7 +237,33 @@ class AnimationFactory:
                     label=label,
                     ending_position=ending_position,
                     easing_style=easing_style,
-                    parabola_points=parabola_points
+                    parent=parent
+                )
+            elif animation_type == "Parabola":
+                vertex_position: QPointF = self._get_vertex_position(starting_position, ending_position)
+                parabola_points: List[AnimationPointF] = self._generate_parabola_data(
+                    starting_position,
+                    vertex_position,
+                    ending_position,
+                    self._get_total_parabola_points(duration, DEFAULT_FRAMERATE)
+                )
+                animation = ParabolaAnimation(
+                    animation_type=animation_type,
+                    sound=sound,
+                    duration=duration,
+                    starting_position=starting_position,
+                    fade_in=fade_in,
+                    fade_out=fade_out,
+                    fade_in_duration=fade_in_duration,
+                    fade_out_duration=fade_out_duration,
+                    fade_out_delay=fade_out_delay,
+                    fade_in_easing_style=fade_in_easing_style,
+                    fade_out_easing_style=fade_out_easing_style,
+                    label=label,
+                    ending_position=ending_position,
+                    easing_style=easing_style,
+                    parabola_points=parabola_points,
+                    parent=parent
                 )
             elif animation_type == "Swivel":
                 phase_1_percentage: float = config.get("phase_1_percentage", 0.50)
@@ -274,7 +274,6 @@ class AnimationFactory:
                     phase_1_percentage
                 )
                 animation = SwivelAnimation(
-                    parent=parent,
                     animation_type=animation_type,
                     sound=sound,
                     duration=duration,
@@ -291,7 +290,8 @@ class AnimationFactory:
                     easing_style=easing_style,
                     phase_1_duration=self._calculate_phase_duration(duration, phase_1_percentage),
                     phase_2_duration=self._calculate_phase_duration(duration, phase_2_percentage),
-                    swivel_position=swivel_position
+                    swivel_position=swivel_position,
+                    parent=parent
                 )
             else:
                 logging.error("Unknown dynamic animation subtype: %s", animation_type)
@@ -307,7 +307,6 @@ class AnimationFactory:
     def _build_static_animation(
             self,
             config: Dict[str, Any],
-            parent: QObject,
             animation_type: str,
             sound: QSoundEffect,
             duration: int,
@@ -319,7 +318,8 @@ class AnimationFactory:
             fade_out_delay: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
-            label: AnimationLabel
+            label: AnimationLabel,
+            parent=None
     ) -> Optional[Animation]:
         """
         Builds a static type Animation instance.
@@ -344,11 +344,10 @@ class AnimationFactory:
         """
         try:
             jiggle: bool = config.get("jiggle", False)
-            jiggle_intensity: float = self.JIGGLE_MAP.get(config.get("jiggle_intensity", "Medium"), 0.050)
+            jiggle_intensity: int = self.JIGGLE_MAP.get(config.get("jiggle_intensity", "Medium"), 50)
 
             if animation_type == "Stationary":
                 animation = StationaryAnimation(
-                    parent=parent,
                     animation_type=animation_type,
                     sound=sound,
                     duration=duration,
@@ -362,7 +361,8 @@ class AnimationFactory:
                     fade_out_easing_style=fade_out_easing_style,
                     label=label,
                     jiggle=jiggle,
-                    jiggle_intensity=jiggle_intensity
+                    jiggle_intensity=jiggle_intensity,
+                    parent=parent
                 )
             elif animation_type == "Pow":
                 scale_percentage: float = config.get("scale_percentage", 1.70)
@@ -373,7 +373,6 @@ class AnimationFactory:
                     QEasingCurve.Type.Linear
                 )
                 animation = PowAnimation(
-                    parent=parent,
                     animation_type=animation_type,
                     sound=sound,
                     duration=duration,
@@ -391,7 +390,8 @@ class AnimationFactory:
                     scale_percentage=scale_percentage,
                     phase_1_percentage=phase_1_percentage,
                     phase_2_percentage=phase_2_percentage,
-                    scale_easing_style=scale_easing_style
+                    scale_easing_style=scale_easing_style,
+                    parent=parent
                 )
             else:
                 logging.error("Unknown static animation subtype: %s", animation_type)

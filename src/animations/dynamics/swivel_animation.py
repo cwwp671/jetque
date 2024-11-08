@@ -2,7 +2,7 @@
 
 import logging
 
-from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation, QObject
+from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation
 from PyQt6.QtMultimedia import QSoundEffect
 
 from src.animations.dynamic_animation import DynamicAnimation
@@ -17,7 +17,6 @@ class SwivelAnimation(DynamicAnimation):
 
     def __init__(
             self,
-            parent: QObject,
             animation_type: str,
             sound: QSoundEffect,
             duration: int,
@@ -34,13 +33,13 @@ class SwivelAnimation(DynamicAnimation):
             easing_style: QEasingCurve.Type,
             phase_1_duration: int,
             phase_2_duration: int,
-            swivel_position: QPointF
+            swivel_position: QPointF,
+            parent=None
     ) -> None:
         """
         Initialize the SwivelAnimation with the given parameters.
 
         Args:
-            parent (QObject): The parent object.
             animation_type (str): The type of animation.
             sound (QSoundEffect): The sound effect to play.
             duration (int): The duration of the animation in milliseconds.
@@ -58,14 +57,9 @@ class SwivelAnimation(DynamicAnimation):
             phase_1_duration (int): The duration of phase 1
             phase_2_duration (int): The duration of phase 2
             swivel_position (QPointF): The Swivel position for the animation.
+            parent: The parent object.
         """
-        self.phase_1_duration: int = phase_1_duration
-        self.phase_2_duration: int = phase_2_duration
-        self.swivel_position: QPointF = swivel_position
-        self.animation2 = QPropertyAnimation(self.label, b"pos")
-        logging.debug("SwivelAnimation initialized.")
         super().__init__(
-            parent=parent,
             animation_type=animation_type,
             sound=sound,
             duration=duration,
@@ -79,10 +73,16 @@ class SwivelAnimation(DynamicAnimation):
             fade_out_easing_style=fade_out_easing_style,
             label=label,
             ending_position=ending_position,
-            easing_style=easing_style
+            easing_style=easing_style,
+            parent=parent
         )
 
-    def setup_animations(self) -> None:
+        self.phase_1_duration: int = phase_1_duration
+        self.phase_2_duration: int = phase_2_duration
+        self.swivel_position: QPointF = swivel_position
+        self.animation2 = QPropertyAnimation(self.label, b"pos")
+
+    def _setup_animations(self) -> None:
         """
         Set up the swivel animation settings and groups.
         """
@@ -96,7 +96,7 @@ class SwivelAnimation(DynamicAnimation):
             self.animation2.setEndValue(self.ending_position)
             self.animation2.setEasingCurve(self.easing_style)
             logging.debug("Phase 2 animation set up with duration %d ms.", self.phase_2_duration)
-            self.animation_group.addAnimation(self.animation2)
-            logging.debug("SwivelAnimation animations set up.")
+            self.addAnimation(self.animation2)
+            logging.debug("SwivelAnimation set up.")
         except Exception as e:
-            logging.exception("Failed to set up SwivelAnimation animations: %s", e)
+            logging.exception("Failed to set up SwivelAnimation: %s", e)

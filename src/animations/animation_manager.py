@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import QWidget
 
 from src.animations.animation import Animation
 from src.animations.animation_factory import AnimationFactory
+from src.animations.animation_label import AnimationLabel
 
 
 class AnimationManager(QObject):
@@ -23,7 +24,7 @@ class AnimationManager(QObject):
             Timer to periodically detect intersections between animations.
     """
 
-    def __init__(self, parent: QWidget, config: Dict[str, Any]) -> None:
+    def __init__(self, config: Dict[str, Any], parent=None) -> None:
         """
         Initializes the AnimationController with the given parent widget and configuration.
 
@@ -42,7 +43,7 @@ class AnimationManager(QObject):
             "pow_animations": []
         }
         self.config = config
-        self.animation_factory = AnimationFactory()
+        self.animation_factory = AnimationFactory(self)
         self.detect_intersections_timer = QTimer(self)
         self.detect_intersections_timer.setInterval(1000)  # Interval in milliseconds
         self.detect_intersections_timer.timeout.connect(self._detect_intersections)
@@ -74,7 +75,6 @@ class AnimationManager(QObject):
             animation (Animation): The animation instance to start.
         """
         try:
-            animation.play()
             animation.finished.connect(lambda: self.handle_animation_finished(animation))
             animation_type = type(animation).__name__.lower()
             if isinstance(animation, Animation):
@@ -82,6 +82,8 @@ class AnimationManager(QObject):
                     self.dynamic_animations[animation_type + '_animations'].append(animation)
                 elif hasattr(self.static_animations, animation_type + '_animations'):
                     self.static_animations[animation_type + '_animations'].append(animation)
+                self.request_display(animation.label)
+                animation.start()  # TODO: Maybe pass (DeletionPolicy = DeleteWhenStopped) and adjust Stop logic
                 logging.info("Animation started: %s", animation)
             else:
                 logging.warning("Attempted to start invalid animation type: %s", type(animation))
@@ -126,13 +128,23 @@ class AnimationManager(QObject):
         except Exception as e:
             logging.exception("Error in clean_up_animation: %s", e)
 
+    def request_display(self, animation_label: AnimationLabel) -> None:
+        """
+        Sends a request to the Overlay to display the animation.
+
+        Args:
+            animation_label (AnimationLabel): The animation instance's label to be displayed.
+        """
+        # TODO: Logic to display the label on the overlay will be implemented here
+        pass
+
     @pyqtSlot()
     def handle_animation_finished(self, animation: Animation) -> None:
         """
         Handles the cleanup process when an animation finishes.
 
         Args:
-            animation (Animation): The animation instance that has finished.
+            animation (Animation): The animation instance that has started.
         """
         try:
             self.clean_up_animation(animation)
