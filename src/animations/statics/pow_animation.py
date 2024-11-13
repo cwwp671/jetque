@@ -2,11 +2,11 @@
 
 import logging
 
-from PyQt6.QtCore import QEasingCurve, QPointF
+from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation
 from PyQt6.QtMultimedia import QSoundEffect
 
 from src.animations.static_animation import StaticAnimation
-from src.animations.animation_label import AnimationLabel
+from src.animations.OLD_animation_label import AnimationLabel
 
 
 class PowAnimation(StaticAnimation):
@@ -32,8 +32,8 @@ class PowAnimation(StaticAnimation):
             jiggle_intensity: float,
             scale_percentage: float,
             scale_easing_style: QEasingCurve.Type,
-            phase_1_percentage: float,
-            phase_2_percentage: float,
+            phase_1_duration: int,
+            phase_2_duration: int,
             parent=None
     ) -> None:
         """
@@ -56,8 +56,8 @@ class PowAnimation(StaticAnimation):
             jiggle_intensity (float): The intensity of the jiggle effect.
             scale_percentage (float): The amount the text scales.
             scale_easing_style (QEasingCurve.Type): The easing curve for the scaling.
-            phase_1_percentage: (float): The percentage of the duration to devote to phase 1.
-            phase_2_percentage: (float): The percentage of the duration to devote to phase 2.
+            phase_1_duration: (int): The percentage of the duration to devote to phase 1.
+            phase_2_duration: (int): The percentage of the duration to devote to phase 2.
             parent: The parent object.
         """
         super().__init__(
@@ -80,8 +80,9 @@ class PowAnimation(StaticAnimation):
 
         self.scale_percentage: float = scale_percentage
         self.scale_easing_style: QEasingCurve.Type = scale_easing_style
-        self.phase_1_percentage: float = phase_1_percentage
-        self.phase_2_percentage: float = phase_2_percentage
+        self.phase_1_duration: int = phase_1_duration
+        self.phase_2_duration: int = phase_2_duration
+        self.animation = QPropertyAnimation(self.label, b"scale")
 
     def _setup_animations(self) -> None:
         """
@@ -89,8 +90,15 @@ class PowAnimation(StaticAnimation):
         """
         try:
             super()._setup_animations()
-            # TODO: Implement the PowAnimation Setup
-            logging.debug("PowAnimation set up.")
 
+            if self.jiggle:
+                self.jiggle_animation.addPause(self.phase_1_duration)
+
+            self.animation.setDuration(self.phase_1_duration)
+            self.animation.setStartValue(1.0)
+            self.animation.setKeyValueAt(0.5, self.scale_percentage)
+            self.animation.setEndValue(1.0)
+            self.animation.setEasingCurve(self.scale_easing_style)
+            logging.debug("PowAnimation set up.")
         except Exception as e:
             logging.exception("Failed to set up PowAnimation: %s", e)

@@ -2,11 +2,11 @@
 
 import logging
 
-from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation
+from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation, QSequentialAnimationGroup
 from PyQt6.QtMultimedia import QSoundEffect
 
+from src.animations.animation_text_item import AnimationTextItem
 from src.animations.dynamic_animation import DynamicAnimation
-from src.animations.animation_label import AnimationLabel
 
 
 class SwivelAnimation(DynamicAnimation):
@@ -28,7 +28,7 @@ class SwivelAnimation(DynamicAnimation):
             fade_out_delay: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
-            label: AnimationLabel,
+            label: AnimationTextItem,
             ending_position: QPointF,
             easing_style: QEasingCurve.Type,
             phase_1_duration: int,
@@ -51,7 +51,7 @@ class SwivelAnimation(DynamicAnimation):
             fade_out_delay (int): The fade-out delay in milliseconds.
             fade_in_easing_style (QEasingCurve.Type): The easing curve for fade-in.
             fade_out_easing_style (QEasingCurve.Type): The easing curve for fade-out.
-            label (AnimationLabel): The label associated with the animation.
+            label (AnimationTextItem): The label associated with the animation.
             ending_position (QPointF): The ending position of the animation.
             easing_style (QEasingCurve.Type): The easing curve type for the animation.
             phase_1_duration (int): The duration of phase 1
@@ -59,6 +59,7 @@ class SwivelAnimation(DynamicAnimation):
             swivel_position (QPointF): The Swivel position for the animation.
             parent: The parent object.
         """
+
         super().__init__(
             animation_type=animation_type,
             sound=sound,
@@ -81,6 +82,8 @@ class SwivelAnimation(DynamicAnimation):
         self.phase_2_duration: int = phase_2_duration
         self.swivel_position: QPointF = swivel_position
         self.animation2 = QPropertyAnimation(self.label, b"pos")
+        self.animation_sequence: QSequentialAnimationGroup = QSequentialAnimationGroup()
+        self._setup_animations()
 
     def _setup_animations(self) -> None:
         """
@@ -89,14 +92,27 @@ class SwivelAnimation(DynamicAnimation):
         try:
             super()._setup_animations()
             self.animation.setDuration(self.phase_1_duration)
+            self.animation.setStartValue(self.starting_position)
             self.animation.setEndValue(self.swivel_position)
-            logging.debug("Phase 1 animation set up with duration %d ms.", self.phase_1_duration)
+            self.animation.setEasingCurve(self.easing_style)
+            logging.debug(f"SwivelAnimation Created:\n"
+                          f"Duration: {self.animation.duration()}\n"
+                          f"Swivel Position: {self.animation.endValue()}")
             self.animation2.setDuration(self.phase_2_duration)
             self.animation2.setStartValue(self.swivel_position)
             self.animation2.setEndValue(self.ending_position)
             self.animation2.setEasingCurve(self.easing_style)
-            logging.debug("Phase 2 animation set up with duration %d ms.", self.phase_2_duration)
-            self.addAnimation(self.animation2)
-            logging.debug("SwivelAnimation set up.")
+            logging.debug(f"SwivelAnimation Phase 2 Created:\n"
+                          f"Duration: {self.animation2.duration()}\n"
+                          f"Starting Position: {self.animation2.startValue()}\n"
+                          f"Ending Position: {self.animation2.endValue()}\n"
+                          f"Easing Curve: {self.animation2.easingCurve()}")
+            self.removeAnimation(self.animation)
+            self.animation_sequence.addAnimation(self.animation)
+            self.animation_sequence.addAnimation(self.animation2)
+            self.addAnimation(self.animation_sequence)
+            logging.debug("Animation Fully Set Up")
+            logging.debug(f"Label Pos: {self.label.pos()}")
+            logging.debug(f"Label Pos: {self.label.scenePos()}")
         except Exception as e:
             logging.exception("Failed to set up SwivelAnimation: %s", e)

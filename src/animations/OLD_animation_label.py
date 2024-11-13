@@ -1,4 +1,4 @@
-# jetque/src/animations/animation_label.py
+# jetque/src/animations/OLD_animation_label.py
 
 import logging
 from typing import Optional, Tuple
@@ -16,7 +16,7 @@ from PyQt6.QtGui import (
 from PyQt6.QtWidgets import QLabel, QWidget
 
 from src.overlays.active_overlay import ActiveOverlay
-from .animation_icon import AnimationIcon  # Importing AnimationIcon from animation_icon.py
+from .OLD_animation_icon import AnimationIcon  # Importing AnimationIcon from OLD_animation_icon.py
 
 DEFAULT_FONT_TYPE: str = "Arial"
 DEFAULT_FONT_SIZE: int = 24

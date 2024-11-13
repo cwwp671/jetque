@@ -9,7 +9,7 @@ from PyQt6.QtCore import QSize
 
 import sys
 
-from src.animations.animation_label import AnimationLabel, ICON_SPACING
+from src.animations.OLD_animation_label import AnimationLabel, ICON_SPACING
 
 # Initialize the QApplication once for all tests
 app = QApplication(sys.argv)

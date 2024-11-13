@@ -6,7 +6,7 @@ from PyQt6.QtCore import QEasingCurve, QPointF
 from PyQt6.QtMultimedia import QSoundEffect
 
 from src.animations.animation import Animation
-from src.animations.animation_label import AnimationLabel
+from src.animations.animation_text_item import AnimationTextItem
 
 
 class DynamicAnimation(Animation):
@@ -31,7 +31,7 @@ class DynamicAnimation(Animation):
             fade_out_delay: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
-            label: AnimationLabel,
+            label: AnimationTextItem,
             ending_position: QPointF,
             easing_style: QEasingCurve.Type,
             parent=None
@@ -51,7 +51,7 @@ class DynamicAnimation(Animation):
             fade_out_delay (int): The fade-out delay in milliseconds.
             fade_in_easing_style (QEasingCurve.Type): The easing curve for fade-in.
             fade_out_easing_style (QEasingCurve.Type): The easing curve for fade-out.
-            label (AnimationLabel): The label associated with the animation.
+            label (AnimationTextItem): The label associated with the animation.
             ending_position (QPointF): The ending position of the animation.
             easing_style (QEasingCurve.Type): The easing curve type for the animation.
             parent: The parent object.
@@ -79,11 +79,12 @@ class DynamicAnimation(Animation):
         """
         Set up the dynamic animation settings and groups.
         """
-        logging.debug("Setting up DynamicAnimation.")
         try:
             super()._setup_animations()
             self.animation.setEndValue(self.ending_position)
             self.animation.setEasingCurve(self.easing_style)
-            logging.debug("DynamicAnimation animations set up.")
+            logging.debug(f"DynamicAnimation Created:\n"
+                          f"Ending Position: {self.animation.endValue()}\n"
+                          f"Easing Curve: {self.animation.easingCurve()}")
         except Exception as e:
             logging.exception("Error setting up DynamicAnimation: %s", e)

@@ -1,9 +1,13 @@
+# src/animations/animation.py
+
 import logging
+
 from PyQt6.QtCore import (
-    QEasingCurve, QPointF, QPropertyAnimation, QSequentialAnimationGroup, QParallelAnimationGroup
+    QEasingCurve, QPointF, QPropertyAnimation, QSequentialAnimationGroup, QParallelAnimationGroup, QAbstractAnimation
 )
+
 from PyQt6.QtMultimedia import QSoundEffect
-from src.animations.animation_label import AnimationLabel
+from src.animations.animation_text_item import AnimationTextItem
 
 
 class Animation(QParallelAnimationGroup):
@@ -24,7 +28,7 @@ class Animation(QParallelAnimationGroup):
             fade_out_delay: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
-            label: AnimationLabel,
+            label: AnimationTextItem,
             parent=None
     ) -> None:
         """
@@ -42,13 +46,13 @@ class Animation(QParallelAnimationGroup):
             fade_out_delay (int): The fade-out delay in milliseconds.
             fade_in_easing_style (QEasingCurve.Type): The easing curve for fade-in.
             fade_out_easing_style (QEasingCurve.Type): The easing curve for fade-out.
-            label (AnimationLabel): The label associated with the animation.
+            label (AnimationTextItem): The label associated with the animation.
             parent: The parent object.
         """
         super().__init__(parent)
         self.type: str = animation_type
         self.sound: QSoundEffect = sound
-        self.label: AnimationLabel = label
+        self.label: AnimationTextItem = label
         self.duration: int = duration
         self.starting_position: QPointF = starting_position
         self.fade_in: bool = fade_in
@@ -58,7 +62,6 @@ class Animation(QParallelAnimationGroup):
         self.fade_out_duration: int = fade_out_duration
         self.fade_out_delay: int = fade_out_delay
         self.fade_out_easing_style: QEasingCurve.Type = fade_out_easing_style
-
         self.animation: QPropertyAnimation = QPropertyAnimation(self.label, b"pos")
 
         if self.fade_in:
@@ -68,18 +71,22 @@ class Animation(QParallelAnimationGroup):
             self.fade_out_animation: QPropertyAnimation = QPropertyAnimation(self.label, b"opacity")
             self.fade_out_group: QSequentialAnimationGroup = QSequentialAnimationGroup()
 
-        self._setup_animations()
+        self.finished.connect(self._on_finished)
+
         logging.debug("Animation initialized: Type=%s", self.type)
 
-    def start(self, *args, **kwargs) -> None:
+    def start(self, policy=QAbstractAnimation.DeletionPolicy.DeleteWhenStopped) -> None:
         """
         Start the animation.
+
+        :param policy: Deletion policy for the animation.
         """
         try:
-            super().start(*args, **kwargs)
+            super().start(policy)
             self._play_sound()
-            # self.label.show()  # May want to do this in the Overlay itself
             logging.debug("Animation started.")
+            logging.debug(f"Label Pos: {self.label.pos()}")
+            logging.debug(f"Label Scene Pos: {self.label.scenePos()}")
         except Exception as e:
             logging.exception("Failed to start Animation: %s", e)
 
@@ -97,7 +104,6 @@ class Animation(QParallelAnimationGroup):
         """
         Set up the animation settings and groups.
         """
-        logging.debug("Setting up Animation.")
         try:
             if self.fade_in:
                 self.fade_in_animation.setDuration(self.fade_in_duration)
@@ -105,6 +111,11 @@ class Animation(QParallelAnimationGroup):
                 self.fade_in_animation.setEndValue(1.0)
                 self.fade_in_animation.setEasingCurve(self.fade_in_easing_style)
                 self.addAnimation(self.fade_in_animation)
+                logging.debug(f"Fade In Created:\n"
+                              f"Duration: {self.fade_in_animation.duration()}\n"
+                              f"Starting Opacity: {self.fade_in_animation.startValue()}\n"
+                              f"Ending Opacity: {self.fade_in_animation.endValue()}\n"
+                              f"Easing Curve: {self.fade_in_animation.easingCurve()}")
 
             if self.fade_out:
                 self.fade_out_animation.setDuration(self.fade_out_duration)
@@ -114,11 +125,20 @@ class Animation(QParallelAnimationGroup):
                 self.fade_out_group.addPause(self.fade_out_delay)
                 self.fade_out_group.addAnimation(self.fade_out_animation)
                 self.addAnimation(self.fade_out_group)
+                logging.debug(f"Fade Out Created:\n"
+                              f"Duration: {self.fade_out_animation.duration()}\n"
+                              f"Pause Duration: {self.fade_out_delay}\n"
+                              f"Starting Opacity: {self.fade_out_animation.startValue()}\n"
+                              f"Ending Opacity: {self.fade_out_animation.endValue()}\n"
+                              f"Easing Curve: {self.fade_out_animation.easingCurve()}"
+                              )
 
             self.animation.setDuration(self.duration)
             self.animation.setStartValue(self.starting_position)
             self.addAnimation(self.animation)
-            logging.debug("Animation set up.")
+            logging.debug(f"Animation Created:\n"
+                          f"Duration: {self.animation.duration()}\n"
+                          f"Starting Position: {self.animation.startValue()}")
         except Exception as e:
             logging.exception("Error setting up Animation: %s", e)
 
@@ -135,3 +155,18 @@ class Animation(QParallelAnimationGroup):
             logging.debug("Sound played for Animation.")
         except Exception as e:
             logging.exception("Error playing sound for Animation: %s", e)
+
+    def _on_finished(self):
+        """
+        Slot called when the animation finishes.
+        """
+        logging.debug("Animation finished.")
+        if self.label:
+            # Remove the label from the scene
+            scene = self.label.scene()
+            if scene:
+                scene.removeItem(self.label)
+                logging.debug("Label removed from scene.")
+            self.label.deleteLater()
+            logging.debug("Label scheduled for deletion.")
+        self.deleteLater()

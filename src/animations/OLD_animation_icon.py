@@ -1,4 +1,4 @@
-# jetque/src/animations/animation_icon.py
+# jetque/src/animations/OLD_animation_icon.py
 
 import logging
 from typing import Optional
@@ -7,7 +7,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QLabel
 
-from src.animations.animation_label import AnimationLabel  # If needed for type hints
+from src.animations.OLD_animation_label import AnimationLabel  # If needed for type hints
 
 # Constants
 DEFAULT_FONT_SIZE: int = 24

@@ -7,7 +7,7 @@ from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation
 from PyQt6.QtMultimedia import QSoundEffect
 
 from src.animations.animation import Animation
-from src.animations.animation_label import AnimationLabel
+from src.animations.OLD_animation_label import AnimationLabel
 
 # Constants
 JIGGLE_AMOUNT = 1.0
@@ -83,7 +83,6 @@ class StaticAnimation(Animation):
         if self.jiggle:
             self.jiggle_intensity: float = jiggle_intensity
             self.jiggle_animation: QPropertyAnimation = QPropertyAnimation(self.label, b"pos")
-            self.jiggle_start_override: bool = False
             self.jiggle_animation.currentLoopChanged.connect(self._apply_jiggle)
             self.old_position: QPointF = self.starting_position
 
@@ -113,9 +112,7 @@ class StaticAnimation(Animation):
             self.jiggle_animation.setLoopCount(INFINITE_LOOP)
             self.jiggle_animation.setStartValue(self.starting_position)
             self.jiggle_animation.setEndValue(self.starting_position)
-
-            if not self.jiggle_start_override:
-                self.addAnimation(self.jiggle_animation)
+            self.addAnimation(self.jiggle_animation)
 
             logging.debug("Jiggle configured.")
         except Exception as e:

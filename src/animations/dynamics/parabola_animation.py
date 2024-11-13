@@ -8,7 +8,7 @@ from PyQt6.QtMultimedia import QSoundEffect
 
 from src.animations.animation_point_f import AnimationPointF
 from src.animations.dynamic_animation import DynamicAnimation
-from src.animations.animation_label import AnimationLabel
+from src.animations.OLD_animation_label import AnimationLabel
 
 
 class ParabolaAnimation(DynamicAnimation):

@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import QWidget
 
 from src.animations.animation import Animation
 from src.animations.animation_factory import AnimationFactory
-from src.animations.animation_label import AnimationLabel
+from src.animations.OLD_animation_label import AnimationLabel
 
 
 class AnimationManager(QObject):

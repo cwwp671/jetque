@@ -4,12 +4,12 @@ import logging
 from typing import Any, Dict, Optional, List
 
 from PyQt6.QtCore import QEasingCurve, QPointF, QUrl, QObject
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtGui import QPixmap, QFontDatabase, QFont
 from PyQt6.QtMultimedia import QSoundEffect
 from PyQt6.QtWidgets import QWidget
 
 from src.animations.animation import Animation
-from src.animations.animation_label import AnimationLabel
+from src.animations.OLD_animation_label import AnimationLabel
 from src.animations.animation_point_f import AnimationPointF
 from src.animations.dynamics.directional_animation import DirectionalAnimation
 from src.animations.dynamics.parabola_animation import ParabolaAnimation
@@ -97,6 +97,44 @@ class AnimationFactory(QObject):
         "High": 25
     }
 
+    CAPITALIZATION_MAP: Dict[str, QFont.Capitalization] = {
+        "MixedCase": QFont.Capitalization.MixedCase,
+        "AllLowercase": QFont.Capitalization.AllLowercase,
+        "AllUppercase": QFont.Capitalization.AllUppercase,
+        "Capitalize": QFont.Capitalization.Capitalize,
+        "SmallCaps": QFont.Capitalization.SmallCaps
+    }
+
+    STRETCH_MAP: Dict[str, QFont.Stretch] = {
+        "Unstretched": QFont.Stretch.Unstreched,
+        "AnyStretch": QFont.Stretch.AnyStretch,
+        "UltraCondensed": QFont.Stretch.UltraCondensed,
+        "ExtraCondensed": QFont.Stretch.ExtraCondensed,
+        "Condensed": QFont.Stretch.Condensed,
+        "SemiCondensed": QFont.Stretch.SemiCondensed,
+        "SemiExpanded": QFont.Stretch.SemiExpanded,
+        "Expanded": QFont.Stretch.Expanded,
+        "ExtraExpanded": QFont.Stretch.ExtraExpanded,
+        "UltraExpanded": QFont.Stretch.UltraExpanded,
+    }
+
+    WEIGHT_MAP: Dict[str, QFont.Weight] = {
+        "Normal": QFont.Weight.Normal,
+        "Thin": QFont.Weight.Thin,
+        "ExtraLight": QFont.Weight.ExtraLight,
+        "Light": QFont.Weight.Light,
+        "Medium": QFont.Weight.Medium,
+        "DemiBold": QFont.Weight.DemiBold,
+        "Bold": QFont.Weight.Bold,
+        "ExtraBold": QFont.Weight.ExtraBold,
+        "Black": QFont.Weight.Black,
+    }
+
+    def __init__(self, parent=None) -> None:
+        super().__init__(parent)
+        # noinspection PyArgumentList
+        self.font_database: QFontDatabase = QFontDatabase()
+
     def build_animation(self, config: Dict[str, Any]) -> Optional[Animation]:
         """
         Builds an Animation instance based on the provided configuration.
@@ -118,9 +156,9 @@ class AnimationFactory(QObject):
             fade_in: bool = config.get("fade_in", False)
             fade_out: bool = config.get("fade_out", False)
             fade_in_percentage: float = config.get("fade_in_percentage", 0.0)
-            fade_in_duration: int = self._get_fade_duration(duration, fade_in_percentage)
+            fade_in_duration: int = self._get_phase_duration(duration, fade_in_percentage)
             fade_out_percentage: float = config.get("fade_out_percentage", 0.0)
-            fade_out_duration: int = self._get_fade_duration(duration, fade_out_percentage)
+            fade_out_duration: int = self._get_phase_duration(duration, fade_out_percentage)
             fade_out_delay: int = self._get_fade_out_delay(duration, fade_out_duration)
 
             fade_in_easing_style: QEasingCurve.Type = self.EASING_MAP.get(
@@ -288,8 +326,8 @@ class AnimationFactory(QObject):
                     label=label,
                     ending_position=ending_position,
                     easing_style=easing_style,
-                    phase_1_duration=self._calculate_phase_duration(duration, phase_1_percentage),
-                    phase_2_duration=self._calculate_phase_duration(duration, phase_2_percentage),
+                    phase_1_duration=self._get_phase_duration(duration, phase_1_percentage),
+                    phase_2_duration=self._get_phase_duration(duration, phase_2_percentage),
                     swivel_position=swivel_position,
                     parent=parent
                 )
@@ -388,8 +426,8 @@ class AnimationFactory(QObject):
                     jiggle=jiggle,
                     jiggle_intensity=jiggle_intensity,
                     scale_percentage=scale_percentage,
-                    phase_1_percentage=phase_1_percentage,
-                    phase_2_percentage=phase_2_percentage,
+                    phase_1_duration=self._get_phase_duration(duration, phase_1_percentage),
+                    phase_2_duration=self._get_phase_duration(duration, phase_2_percentage),
                     scale_easing_style=scale_easing_style,
                     parent=parent
                 )
@@ -470,7 +508,7 @@ class AnimationFactory(QObject):
         return QWidget()
 
     @staticmethod
-    def _get_fade_duration(duration: int, percentage: float) -> int:
+    def _get_phase_duration(duration: int, percentage: float) -> int:
         """
         Get the phase duration of a faded in or out animation
 
@@ -654,27 +692,37 @@ class AnimationFactory(QObject):
             ]
 
     @staticmethod
-    def _calculate_phase_duration(duration: int, percentage: float) -> int:
-        """
-        Calculate the duration of a phase based on the total duration and percentage.
+    def _create_q_font(
+            font_type: str,
+            font_size: int,
+            font_weight: int,
+            font_style: int,
+            font_letter_spacing: float,
+            font_word_spacing: float,
+            font_underline: bool,
+            font_overline: bool,
+            font_strikeout: bool,
+            font_kerning: bool,
+            font_capitalization: QFont.Capitalization,
+            font_stretch: QFont.Stretch
+    ) -> QFont:
+        q_font: QFont = QFont(font_type, font_size, font_weight, font_style)
+        q_font.setStretch(font_stretch)
+        q_font.setKerning(font_kerning)
+        q_font.setCapitalization(font_capitalization)
+        q_font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, font_letter_spacing)
+        q_font.setWordSpacing(font_word_spacing)
+        q_font.setUnderline(font_underline)
+        q_font.setOverline(font_overline)
+        q_font.setStrikeOut(font_strikeout)
+        return q_font
 
-        Args:
-            duration (int): The total duration of the animation in milliseconds.
-            percentage (float): The percentage of the total duration for the phase.
-
-        Returns:
-            int: The calculated duration for the phase in milliseconds.
-        """
-        if not (0.0 < percentage < 1.0):
-            logging.warning(
-                "Percentage %.2f is out of bounds (0.0 < percentage < 1.0). "
-                "Defaulting to 0.5.", percentage
-            )
-            percentage = 0.5  # Default to 50% if out of bounds
-        calculated_duration = int(duration * percentage)
-        logging.debug(
-            "Calculated duration: %d ms for percentage: %.2f%%.",
-            calculated_duration,
-            percentage * 100,
-            )
-        return calculated_duration
+    @staticmethod
+    def _get_font_style(font_database: QFontDatabase, font_type: str, font_italic: bool) -> int:
+        if font_italic:
+            if font_database.isSmoothlyScalable(font_type) and font_database.italic(font_type):
+                return QFont.Style.StyleItalic.value
+            else:
+                return QFont.Style.StyleOblique.value
+        else:
+            return QFont.Style.StyleNormal.value

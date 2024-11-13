@@ -4,7 +4,7 @@ from PyQt6.QtCore import QEasingCurve, QPointF
 from PyQt6.QtMultimedia import QSoundEffect
 
 from src.animations.dynamic_animation import DynamicAnimation
-from src.animations.animation_label import AnimationLabel
+from src.animations.OLD_animation_label import AnimationLabel
 
 
 class DirectionalAnimation(DynamicAnimation):
