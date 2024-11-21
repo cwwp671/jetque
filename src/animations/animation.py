@@ -50,6 +50,8 @@ class Animation(QParallelAnimationGroup):
             parent: The parent object.
         """
         super().__init__(parent)
+
+        # Initialize common attributes between all Animation children
         self.type: str = animation_type
         self.sound: QSoundEffect = sound
         self.label: AnimationTextItem = label
@@ -63,110 +65,69 @@ class Animation(QParallelAnimationGroup):
         self.fade_out_delay: int = fade_out_delay
         self.fade_out_easing_style: QEasingCurve.Type = fade_out_easing_style
         self.animation: QPropertyAnimation = QPropertyAnimation(self.label, b"pos")
+        self.animation.setDuration(self.duration)
+        self.animation.setStartValue(self.starting_position)
+        self.addAnimation(self.animation)
 
+        # Optional Fade-In effect
         if self.fade_in:
             self.fade_in_animation: QPropertyAnimation = QPropertyAnimation(self.label, b"opacity")
+            self.fade_in_animation.setDuration(self.fade_in_duration)
+            self.fade_in_animation.setStartValue(0.0)
+            self.fade_in_animation.setEndValue(1.0)
+            self.fade_in_animation.setEasingCurve(self.fade_in_easing_style)
+            self.addAnimation(self.fade_in_animation)
 
+        # Optional Fade-Out effect
         if self.fade_out:
             self.fade_out_animation: QPropertyAnimation = QPropertyAnimation(self.label, b"opacity")
             self.fade_out_group: QSequentialAnimationGroup = QSequentialAnimationGroup()
+            self.fade_out_animation.setDuration(self.fade_out_duration)
+            self.fade_out_animation.setStartValue(1.0)
+            self.fade_out_animation.setEndValue(0.0)
+            self.fade_out_animation.setEasingCurve(self.fade_out_easing_style)
+            self.fade_out_group.addPause(self.fade_out_delay)
+            self.fade_out_group.addAnimation(self.fade_out_animation)
+            self.addAnimation(self.fade_out_group)
 
+        # Connecting finished signal to help handle cleanup / deletion to avoid memory leaks
         self.finished.connect(self._on_finished)
-
-        logging.debug("Animation initialized: Type=%s", self.type)
 
     def start(self, policy=QAbstractAnimation.DeletionPolicy.DeleteWhenStopped) -> None:
         """
         Start the animation.
 
         :param policy: Deletion policy for the animation.
+                       Tell the animation to delete if it is stopped manually with DeleteWhenStopped.
         """
         try:
             super().start(policy)
             self._play_sound()
-            logging.debug("Animation started.")
-            logging.debug(f"Label Pos: {self.label.pos()}")
-            logging.debug(f"Label Scene Pos: {self.label.scenePos()}")
         except Exception as e:
             logging.exception("Failed to start Animation: %s", e)
 
-    def stop(self) -> None:
+    def _on_finished(self):
         """
-        Stop the animation.
+        Slot called when the animation finishes.
         """
-        try:
-            super().stop()
-            logging.debug("Animation stopped.")
-        except Exception as e:
-            logging.exception("Failed to stop Animation: %s", e)
+        if self.label:
+            scene = self.label.scene()
 
-    def _setup_animations(self) -> None:
-        """
-        Set up the animation settings and groups.
-        """
-        try:
-            if self.fade_in:
-                self.fade_in_animation.setDuration(self.fade_in_duration)
-                self.fade_in_animation.setStartValue(0.0)
-                self.fade_in_animation.setEndValue(1.0)
-                self.fade_in_animation.setEasingCurve(self.fade_in_easing_style)
-                self.addAnimation(self.fade_in_animation)
-                logging.debug(f"Fade In Created:\n"
-                              f"Duration: {self.fade_in_animation.duration()}\n"
-                              f"Starting Opacity: {self.fade_in_animation.startValue()}\n"
-                              f"Ending Opacity: {self.fade_in_animation.endValue()}\n"
-                              f"Easing Curve: {self.fade_in_animation.easingCurve()}")
+            if scene:
+                scene.removeItem(self.label)
 
-            if self.fade_out:
-                self.fade_out_animation.setDuration(self.fade_out_duration)
-                self.fade_out_animation.setStartValue(1.0)
-                self.fade_out_animation.setEndValue(0.0)
-                self.fade_out_animation.setEasingCurve(self.fade_out_easing_style)
-                self.fade_out_group.addPause(self.fade_out_delay)
-                self.fade_out_group.addAnimation(self.fade_out_animation)
-                self.addAnimation(self.fade_out_group)
-                logging.debug(f"Fade Out Created:\n"
-                              f"Duration: {self.fade_out_animation.duration()}\n"
-                              f"Pause Duration: {self.fade_out_delay}\n"
-                              f"Starting Opacity: {self.fade_out_animation.startValue()}\n"
-                              f"Ending Opacity: {self.fade_out_animation.endValue()}\n"
-                              f"Easing Curve: {self.fade_out_animation.easingCurve()}"
-                              )
-
-            self.animation.setDuration(self.duration)
-            self.animation.setStartValue(self.starting_position)
-            self.addAnimation(self.animation)
-            logging.debug(f"Animation Created:\n"
-                          f"Duration: {self.animation.duration()}\n"
-                          f"Starting Position: {self.animation.startValue()}")
-        except Exception as e:
-            logging.exception("Error setting up Animation: %s", e)
+            self.label.deleteLater()
+        self.deleteLater()
 
     def _play_sound(self) -> None:
         """
         Play the associated sound effect if available.
         """
         if not self.sound:
-            logging.debug("No sound effect to play for Animation.")
+            logging.warning("No sound effect to play for Animation.")
             return
 
         try:
             self.sound.play()
-            logging.debug("Sound played for Animation.")
         except Exception as e:
             logging.exception("Error playing sound for Animation: %s", e)
-
-    def _on_finished(self):
-        """
-        Slot called when the animation finishes.
-        """
-        logging.debug("Animation finished.")
-        if self.label:
-            # Remove the label from the scene
-            scene = self.label.scene()
-            if scene:
-                scene.removeItem(self.label)
-                logging.debug("Label removed from scene.")
-            self.label.deleteLater()
-            logging.debug("Label scheduled for deletion.")
-        self.deleteLater()

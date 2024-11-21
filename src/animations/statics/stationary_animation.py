@@ -3,8 +3,8 @@
 from PyQt6.QtCore import QEasingCurve, QPointF
 from PyQt6.QtMultimedia import QSoundEffect
 
+from src.animations.animation_text_item import AnimationTextItem
 from src.animations.static_animation import StaticAnimation
-from src.animations.OLD_animation_label import AnimationLabel
 
 
 class StationaryAnimation(StaticAnimation):
@@ -25,9 +25,9 @@ class StationaryAnimation(StaticAnimation):
             fade_out_delay: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
-            label: AnimationLabel,
+            label: AnimationTextItem,
             jiggle: bool,
-            jiggle_intensity: float,
+            jiggle_intensity: int,
             parent=None
     ) -> None:
         """
@@ -45,9 +45,9 @@ class StationaryAnimation(StaticAnimation):
             fade_out_delay (int): The fade-out delay in milliseconds.
             fade_in_easing_style (QEasingCurve.Type): The easing curve for fade-in.
             fade_out_easing_style (QEasingCurve.Type): The easing curve for fade-out.
-            label (AnimationLabel): The label associated with the animation.
+            label (AnimationTextItem): The label associated with the animation.
             jiggle (bool): Whether the jiggle effect is enabled.
-            jiggle_intensity (float): The intensity of the jiggle effect.
+            jiggle_intensity (int): The intensity of the jiggle effect in milliseconds.
             parent: The parent object.
         """
         super().__init__(

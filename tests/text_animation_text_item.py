@@ -37,13 +37,13 @@ def main():
 
     # Create an instance of AnimationTextItem with desired properties
     text_item = AnimationTextItem(
-        font=font,
+        text_font=font,
         text_message="AnimationTextItem Test",
         text_color="White",            # Text color set to White
-        text_outline_color="Black",    # Text outline color set to Black
-        text_outline_strength=2,
-        text_drop_shadow_offset=QPointF(3, 3),
-        text_drop_shadow_blur_radius=4.0
+        outline_color="Black",    # Text outline color set to Black
+        outline_thickness=2,
+        drop_shadow_offset=QPointF(3, 3),
+        drop_shadow_blur_radius=4.0
     )
 
     # Optionally, set the position of the text item within the scene

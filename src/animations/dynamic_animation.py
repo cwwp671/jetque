@@ -1,7 +1,5 @@
 # src/animations/dynamic_animation.py
 
-import logging
-
 from PyQt6.QtCore import QEasingCurve, QPointF
 from PyQt6.QtMultimedia import QSoundEffect
 
@@ -72,19 +70,8 @@ class DynamicAnimation(Animation):
             parent=parent
         )
 
+        # Initialize common attributes between all DynamicAnimation children
         self.ending_position: QPointF = ending_position
         self.easing_style: QEasingCurve.Type = easing_style
-
-    def _setup_animations(self) -> None:
-        """
-        Set up the dynamic animation settings and groups.
-        """
-        try:
-            super()._setup_animations()
-            self.animation.setEndValue(self.ending_position)
-            self.animation.setEasingCurve(self.easing_style)
-            logging.debug(f"DynamicAnimation Created:\n"
-                          f"Ending Position: {self.animation.endValue()}\n"
-                          f"Easing Curve: {self.animation.easingCurve()}")
-        except Exception as e:
-            logging.exception("Error setting up DynamicAnimation: %s", e)
+        self.animation.setEndValue(self.ending_position)
+        self.animation.setEasingCurve(self.easing_style)

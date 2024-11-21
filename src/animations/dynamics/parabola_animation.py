@@ -1,14 +1,13 @@
 # src/animations/dynamics/parabola_animation.py
 
-import logging
 from typing import List
 
 from PyQt6.QtCore import QEasingCurve, QPointF
 from PyQt6.QtMultimedia import QSoundEffect
 
 from src.animations.animation_point_f import AnimationPointF
+from src.animations.animation_text_item import AnimationTextItem
 from src.animations.dynamic_animation import DynamicAnimation
-from src.animations.OLD_animation_label import AnimationLabel
 
 
 class ParabolaAnimation(DynamicAnimation):
@@ -30,7 +29,7 @@ class ParabolaAnimation(DynamicAnimation):
             fade_out_delay: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
-            label: AnimationLabel,
+            label: AnimationTextItem,
             ending_position: QPointF,
             easing_style: QEasingCurve.Type,
             parabola_points: List[AnimationPointF],
@@ -51,7 +50,7 @@ class ParabolaAnimation(DynamicAnimation):
             fade_out_delay (int): The fade-out delay in milliseconds.
             fade_in_easing_style (QEasingCurve.Type): The easing curve for fade-in.
             fade_out_easing_style (QEasingCurve.Type): The easing curve for fade-out.
-            label (AnimationLabel): The label associated with the animation.
+            label (AnimationTextItem): The label associated with the animation.
             ending_position (QPointF): The ending position of the animation.
             easing_style (QEasingCurve.Type): The easing curve type for the animation.
             parabola_points (List[AnimationPointF]): The positions along the curve of the animation.
@@ -75,19 +74,8 @@ class ParabolaAnimation(DynamicAnimation):
             parent=parent
         )
 
+        # Initialize ParabolaAnimation specific attributes
         self.parabola_points: List[AnimationPointF] = parabola_points
 
-    def _setup_animations(self) -> None:
-        """
-        Set up the parabolic animation settings and groups.
-        """
-        try:
-            super()._setup_animations()
-
-            for point in self.parabola_points:
-                self.animation.setKeyValueAt(point.key_value, point)
-
-            logging.debug("ParabolaAnimation set up.")
-
-        except Exception as e:
-            logging.exception("Failed to set up ParabolaAnimation: %s", e)
+        for point in self.parabola_points:
+            self.animation.setKeyValueAt(point.key_value, point)

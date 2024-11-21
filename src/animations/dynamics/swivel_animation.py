@@ -1,7 +1,5 @@
 # src/animations/dynamics/swivel_animation.py
 
-import logging
-
 from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation, QSequentialAnimationGroup
 from PyQt6.QtMultimedia import QSoundEffect
 
@@ -59,7 +57,6 @@ class SwivelAnimation(DynamicAnimation):
             swivel_position (QPointF): The Swivel position for the animation.
             parent: The parent object.
         """
-
         super().__init__(
             animation_type=animation_type,
             sound=sound,
@@ -78,41 +75,22 @@ class SwivelAnimation(DynamicAnimation):
             parent=parent
         )
 
+        # Initialize SwivelAnimation specific attributes
+        # Phase 1
+        self.removeAnimation(self.animation)  # Removes Phase 1 from Parallel Group
         self.phase_1_duration: int = phase_1_duration
-        self.phase_2_duration: int = phase_2_duration
         self.swivel_position: QPointF = swivel_position
+        self.animation.setDuration(self.phase_1_duration)
+        self.animation.setEndValue(self.swivel_position)
+        # Phase 2
+        self.phase_2_duration: int = phase_2_duration
         self.animation2 = QPropertyAnimation(self.label, b"pos")
+        self.animation2.setDuration(self.phase_2_duration)
+        self.animation2.setStartValue(self.swivel_position)
+        self.animation2.setEndValue(self.ending_position)
+        self.animation2.setEasingCurve(self.easing_style)
+        # Phase Sequence
         self.animation_sequence: QSequentialAnimationGroup = QSequentialAnimationGroup()
-        self._setup_animations()
-
-    def _setup_animations(self) -> None:
-        """
-        Set up the swivel animation settings and groups.
-        """
-        try:
-            super()._setup_animations()
-            self.animation.setDuration(self.phase_1_duration)
-            self.animation.setStartValue(self.starting_position)
-            self.animation.setEndValue(self.swivel_position)
-            self.animation.setEasingCurve(self.easing_style)
-            logging.debug(f"SwivelAnimation Created:\n"
-                          f"Duration: {self.animation.duration()}\n"
-                          f"Swivel Position: {self.animation.endValue()}")
-            self.animation2.setDuration(self.phase_2_duration)
-            self.animation2.setStartValue(self.swivel_position)
-            self.animation2.setEndValue(self.ending_position)
-            self.animation2.setEasingCurve(self.easing_style)
-            logging.debug(f"SwivelAnimation Phase 2 Created:\n"
-                          f"Duration: {self.animation2.duration()}\n"
-                          f"Starting Position: {self.animation2.startValue()}\n"
-                          f"Ending Position: {self.animation2.endValue()}\n"
-                          f"Easing Curve: {self.animation2.easingCurve()}")
-            self.removeAnimation(self.animation)
-            self.animation_sequence.addAnimation(self.animation)
-            self.animation_sequence.addAnimation(self.animation2)
-            self.addAnimation(self.animation_sequence)
-            logging.debug("Animation Fully Set Up")
-            logging.debug(f"Label Pos: {self.label.pos()}")
-            logging.debug(f"Label Pos: {self.label.scenePos()}")
-        except Exception as e:
-            logging.exception("Failed to set up SwivelAnimation: %s", e)
+        self.animation_sequence.addAnimation(self.animation)
+        self.animation_sequence.addAnimation(self.animation2)
+        self.addAnimation(self.animation_sequence)  # Adds the Sequence to the Parallel Group

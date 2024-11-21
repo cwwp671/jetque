@@ -7,7 +7,7 @@ from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation
 from PyQt6.QtMultimedia import QSoundEffect
 
 from src.animations.animation import Animation
-from src.animations.OLD_animation_label import AnimationLabel
+from src.animations.animation_text_item import AnimationTextItem
 
 # Constants
 JIGGLE_AMOUNT = 1.0
@@ -21,7 +21,7 @@ class StaticAnimation(Animation):
 
     Attributes:
         jiggle (bool): Whether the jiggle effect is enabled.
-        jiggle_intensity (float): The intensity of the jiggle effect in milliseconds.
+        jiggle_intensity (int): The intensity of the jiggle effect in milliseconds.
     """
 
     def __init__(
@@ -37,9 +37,9 @@ class StaticAnimation(Animation):
             fade_out_delay: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
-            label: AnimationLabel,
+            label: AnimationTextItem,
             jiggle: bool,
-            jiggle_intensity: float,
+            jiggle_intensity: int,
             parent=None
     ) -> None:
         """
@@ -57,9 +57,9 @@ class StaticAnimation(Animation):
             fade_out_delay (int): The fade-out delay in milliseconds.
             fade_in_easing_style (QEasingCurve.Type): The easing curve for fade-in.
             fade_out_easing_style (QEasingCurve.Type): The easing curve for fade-out.
-            label (AnimationLabel): The label associated with the animation.
+            label (AnimationTextItem): The label associated with the animation.
             jiggle (bool): Whether the jiggle effect is enabled.
-            jiggle_intensity (float): The intensity of the jiggle effect.
+            jiggle_intensity (int): The intensity of the jiggle effect in milliseconds.
             parent: The parent object.
         """
         super().__init__(
@@ -80,47 +80,21 @@ class StaticAnimation(Animation):
 
         self.jiggle: bool = jiggle
 
+        # Optional Jiggle effect
         if self.jiggle:
-            self.jiggle_intensity: float = jiggle_intensity
+            self.jiggle_intensity: int = jiggle_intensity
+            self.old_position: QPointF = self.starting_position
             self.jiggle_animation: QPropertyAnimation = QPropertyAnimation(self.label, b"pos")
             self.jiggle_animation.currentLoopChanged.connect(self._apply_jiggle)
-            self.old_position: QPointF = self.starting_position
-
-        logging.debug("StaticAnimation initialized.")
-
-    def _setup_animations(self) -> None:
-        """
-        Set up the static animation settings and groups, including the jiggle effect.
-        """
-        logging.debug("Setting up StaticAnimation.")
-        try:
-            if self.jiggle:
-                logging.debug("Jiggle effect enabled.")
-                self._configure_jiggle_animation()
-
-            logging.debug("StaticAnimation set up.")
-            super()._setup_animations()
-        except Exception as e:
-            logging.exception("Error setting up StaticAnimation: %s", e)
-
-    def _configure_jiggle_animation(self) -> None:
-        """
-        Configure the jiggle animation.
-        """
-        try:
-            self.jiggle_animation.setDuration(int(self.jiggle_intensity))
+            self.jiggle_animation.setDuration(self.jiggle_intensity)
             self.jiggle_animation.setLoopCount(INFINITE_LOOP)
             self.jiggle_animation.setStartValue(self.starting_position)
             self.jiggle_animation.setEndValue(self.starting_position)
             self.addAnimation(self.jiggle_animation)
 
-            logging.debug("Jiggle configured.")
-        except Exception as e:
-            logging.exception("Error configuring jiggle: %s", e)
-
     def _apply_jiggle(self) -> None:
         """
-        Apply a random jiggle effect to the AnimationLabel position.
+        Apply a random jiggle effect to the AnimationTextItem position.
         """
         try:
             new_position: QPointF = QPointF(
@@ -130,6 +104,5 @@ class StaticAnimation(Animation):
             self.old_position = self.label.pos()
             self.jiggle_animation.setStartValue(self.old_position)
             self.jiggle_animation.setEndValue(new_position)
-            logging.debug("Jiggle loop changed: Starting new jiggle cycle.")
         except Exception as e:
             logging.exception("Error handling jiggle loop change: %s", e)

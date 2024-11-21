@@ -1,12 +1,10 @@
 # src/animations/statics/pow_animation.py
 
-import logging
-
-from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation
+from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation, QSequentialAnimationGroup, QPauseAnimation
 from PyQt6.QtMultimedia import QSoundEffect
 
+from src.animations.animation_text_item import AnimationTextItem
 from src.animations.static_animation import StaticAnimation
-from src.animations.OLD_animation_label import AnimationLabel
 
 
 class PowAnimation(StaticAnimation):
@@ -27,9 +25,9 @@ class PowAnimation(StaticAnimation):
             fade_out_delay: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
-            label: AnimationLabel,
+            label: AnimationTextItem,
             jiggle: bool,
-            jiggle_intensity: float,
+            jiggle_intensity: int,
             scale_percentage: float,
             scale_easing_style: QEasingCurve.Type,
             phase_1_duration: int,
@@ -51,9 +49,9 @@ class PowAnimation(StaticAnimation):
             fade_out_delay (int): The fade-out delay in milliseconds.
             fade_in_easing_style (QEasingCurve.Type): The easing curve for fade-in.
             fade_out_easing_style (QEasingCurve.Type): The easing curve for fade-out.
-            label (AnimationLabel): The label associated with the animation.
+            label (AnimationTextItem): The label associated with the animation.
             jiggle (bool): Whether the jiggle effect is enabled.
-            jiggle_intensity (float): The intensity of the jiggle effect.
+            jiggle_intensity (int): The intensity of the jiggle effect in milliseconds.
             scale_percentage (float): The amount the text scales.
             scale_easing_style (QEasingCurve.Type): The easing curve for the scaling.
             phase_1_duration: (int): The percentage of the duration to devote to phase 1.
@@ -78,27 +76,23 @@ class PowAnimation(StaticAnimation):
             parent=parent
         )
 
+        # Initialize PowAnimation specific attributes
         self.scale_percentage: float = scale_percentage
         self.scale_easing_style: QEasingCurve.Type = scale_easing_style
         self.phase_1_duration: int = phase_1_duration
         self.phase_2_duration: int = phase_2_duration
-        self.animation = QPropertyAnimation(self.label, b"scale")
-
-    def _setup_animations(self) -> None:
-        """
-        Set up the pow animation settings and groups.
-        """
-        try:
-            super()._setup_animations()
-
-            if self.jiggle:
-                self.jiggle_animation.addPause(self.phase_1_duration)
-
-            self.animation.setDuration(self.phase_1_duration)
-            self.animation.setStartValue(1.0)
-            self.animation.setKeyValueAt(0.5, self.scale_percentage)
-            self.animation.setEndValue(1.0)
-            self.animation.setEasingCurve(self.scale_easing_style)
-            logging.debug("PowAnimation set up.")
-        except Exception as e:
-            logging.exception("Failed to set up PowAnimation: %s", e)
+        self.scale_animation = QPropertyAnimation(self.label, b"pos")
+        self.scale_animation.setDuration(self.phase_1_duration)
+        self.scale_animation.setStartValue(1.0)
+        self.scale_animation.setKeyValueAt(0.5, self.scale_percentage)
+        self.scale_animation.setEndValue(1.0)
+        self.scale_animation.setEasingCurve(self.scale_easing_style)
+        self.addAnimation(self.scale_animation)
+        # Delay the Optional Jiggle to be after the scaling effect finishes
+        if self.jiggle:
+            self.removeAnimation(self.jiggle_animation)
+            self.jiggle_pause_animation: QPauseAnimation = QPauseAnimation(self.phase_1_duration, self.label)
+            self.jiggle_animation_sequence: QSequentialAnimationGroup = QSequentialAnimationGroup()
+            self.jiggle_animation_sequence.addAnimation(self.jiggle_pause_animation)
+            self.jiggle_animation_sequence.addAnimation(self.jiggle_animation)
+            self.addAnimation(self.jiggle_animation_sequence)
