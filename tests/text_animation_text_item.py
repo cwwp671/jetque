@@ -5,7 +5,7 @@ import logging
 from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene
 from PyQt6.QtGui import QFont, QColor
 from PyQt6.QtCore import QPointF
-from src.animations.animation_text_item import AnimationTextItem
+from src.animations.animation_text import AnimationText
 
 # Configure logging
 logging.basicConfig(
@@ -36,7 +36,7 @@ def main():
     font = QFont("Helvetica", 48, QFont.Weight.Bold)
 
     # Create an instance of AnimationTextItem with desired properties
-    text_item = AnimationTextItem(
+    text_item = AnimationText(
         text_font=font,
         text_message="AnimationTextItem Test",
         text_color="White",            # Text color set to White

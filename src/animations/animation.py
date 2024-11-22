@@ -7,7 +7,7 @@ from PyQt6.QtCore import (
 )
 
 from PyQt6.QtMultimedia import QSoundEffect
-from src.animations.animation_text_item import AnimationTextItem
+from src.animations.animation_text import AnimationText
 
 
 class Animation(QParallelAnimationGroup):
@@ -28,7 +28,7 @@ class Animation(QParallelAnimationGroup):
             fade_out_delay: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
-            label: AnimationTextItem,
+            text_object: AnimationText,
             parent=None
     ) -> None:
         """
@@ -46,7 +46,7 @@ class Animation(QParallelAnimationGroup):
             fade_out_delay (int): The fade-out delay in milliseconds.
             fade_in_easing_style (QEasingCurve.Type): The easing curve for fade-in.
             fade_out_easing_style (QEasingCurve.Type): The easing curve for fade-out.
-            label (AnimationTextItem): The label associated with the animation.
+            text_object (AnimationText): The label associated with the animation.
             parent: The parent object.
         """
         super().__init__(parent)
@@ -54,7 +54,7 @@ class Animation(QParallelAnimationGroup):
         # Initialize common attributes between all Animation children
         self.type: str = animation_type
         self.sound: QSoundEffect = sound
-        self.label: AnimationTextItem = label
+        self.label: AnimationText = text_object
         self.duration: int = duration
         self.starting_position: QPointF = starting_position
         self.fade_in: bool = fade_in

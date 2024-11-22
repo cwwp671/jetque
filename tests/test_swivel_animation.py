@@ -7,7 +7,7 @@ from PyQt6.QtGui import QFont, QColor, QPainter
 from PyQt6.QtCore import QPointF, QEasingCurve, QUrl, Qt
 from PyQt6.QtMultimedia import QSoundEffect
 
-from src.animations.animation_text_item import AnimationTextItem
+from src.animations.animation_text import AnimationText
 from src.animations.dynamics.swivel_animation import SwivelAnimation
 
 # Configure logging
@@ -60,7 +60,7 @@ def main():
     font = QFont("Helvetica", 36, -1, False)
 
     # Create an instance of AnimationTextItem with desired properties
-    text_item = AnimationTextItem(
+    text_item = AnimationText(
         text_font=font,
         text_message="Swivel Animation Test",
         text_color=QColor("white"),
@@ -118,7 +118,7 @@ def main():
         fade_out_delay=fade_out_delay,
         fade_in_easing_style=fade_in_easing_style,
         fade_out_easing_style=fade_out_easing_style,
-        label=text_item,
+        text_object=text_item,
         ending_position=ending_position,
         easing_style=easing_style,
         phase_1_duration=phase_1_duration,

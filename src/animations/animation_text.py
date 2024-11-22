@@ -1,4 +1,4 @@
-# src/animations/animation_text_item.py
+# src/animations/animation_text.py
 
 import logging
 from typing import Optional
@@ -8,7 +8,7 @@ from PyQt6.QtGui import QColor, QFont, QPainter, QPen, QPainterPath, QFontMetric
 from PyQt6.QtWidgets import QGraphicsTextItem, QGraphicsDropShadowEffect
 
 
-class AnimationTextItem(QGraphicsTextItem):
+class AnimationText(QGraphicsTextItem):
     """
     A customized QGraphicsTextItem that supports advanced font styling, such as outline and drop shadow.
 
@@ -26,31 +26,23 @@ class AnimationTextItem(QGraphicsTextItem):
             text_font: QFont = QFont("Helvetica", -1, -1, False),
             text_message: str = "Text Unassigned",
             text_color: QColor = QColor(Qt.GlobalColor.white),
-            outline: bool = False,
-            outline_thickness: int = 2,
-            outline_color: QColor = QColor(Qt.GlobalColor.black),
-            outline_pen_style: Qt.PenStyle = Qt.PenStyle.SolidLine,
-            outline_pen_cap_style: Qt.PenCapStyle = Qt.PenCapStyle.SquareCap,
-            outline_pen_join_style: Qt.PenJoinStyle = Qt.PenJoinStyle.BevelJoin,
-            drop_shadow: bool = False,
-            drop_shadow_offset: QPointF = QPointF(-3.5, 6.1),
-            drop_shadow_blur_radius: float = 7.0,
-            drop_shadow_color: QColor = QColor("0, 0, 0, 191"),
+            outline: bool = True,
+            outline_pen: QPen = None,
+            drop_shadow: bool = True,
+            drop_shadow_offset: QPointF = QPointF(-3.5, 6.1),  # Using Photoshop default value
+            drop_shadow_blur_radius: float = 7.0,  # Using Photoshop default value
+            drop_shadow_color: QColor = QColor("0, 0, 0, 191"),  # Using Photoshop default value
             parent=None
     ) -> None:
         """
-        Initializes the AnimationTextItem with the provided parameters.
+        Initializes the AnimationText with the provided parameters.
 
         Args:
             text_font (QFont): The font of the text.
             text_message (str): The text content.
             text_color (QColor): The color of the text.
             outline (bool): Whether to draw an outline around the text.
-            outline_thickness (int): The doubled thickness in pixels of the outline.
-            outline_color (QColor): The color of the outline.
-            outline_pen_style (Qt.PenStyle): The style of the outline pen.
-            outline_pen_cap_style (Qt.PenCapStyle): The cap style of the outline pen.
-            outline_pen_join_style (Qt.PenJoinStyle): The join style of the outline pen.
+            outline_pen (int): The doubled thickness in pixels of the outline.
             drop_shadow (bool): Whether to apply a drop shadow effect.
             drop_shadow_offset (QPointF): The offset of the drop shadow.
             drop_shadow_blur_radius (float): The blur radius of the drop shadow.
@@ -77,13 +69,7 @@ class AnimationTextItem(QGraphicsTextItem):
             if self.outline:
                 # Sets up an Outline to paint around the text
                 self.font_metrics_f: QFontMetricsF = QFontMetricsF(self.font())
-                self.outline_pen: QPen = QPen(
-                    outline_color,
-                    outline_thickness,
-                    outline_pen_style,
-                    outline_pen_cap_style,
-                    outline_pen_join_style
-                )
+                self.outline_pen: QPen = outline_pen
                 self.bounding_rect_adjusted: QRectF = super().boundingRect().adjusted(
                     -self.outline_pen.widthF(),
                     -self.outline_pen.widthF(),
@@ -105,10 +91,10 @@ class AnimationTextItem(QGraphicsTextItem):
                     self.toPlainText()
                 )
 
-            logging.debug("AnimationTextItem initialized with text: '%s'", self.toPlainText())
+            logging.debug("AnimationText initialized with text: '%s'", self.toPlainText())
 
         except Exception as e:
-            logging.exception("Failed to initialize AnimationTextItem: %s", e)
+            logging.exception("Failed to initialize AnimationText: %s", e)
 
     def paint(
             self,
@@ -137,4 +123,4 @@ class AnimationTextItem(QGraphicsTextItem):
                 super().paint(painter, option, widget)
 
         except Exception as e:
-            logging.exception("Failed to paint AnimationTextItem: %s", e)
+            logging.exception("Failed to paint AnimationText: %s", e)

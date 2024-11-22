@@ -3,14 +3,15 @@
 import logging
 from typing import Any, Dict, Optional, List
 
-from PyQt6.QtCore import QEasingCurve, QPointF, QUrl, QObject
-from PyQt6.QtGui import QPixmap, QFontDatabase, QFont
+from PyQt6.QtCore import QEasingCurve, QPointF, QUrl, QObject, Qt
+from PyQt6.QtGui import QPixmap, QFontDatabase, QFont, QPen, QColor
 from PyQt6.QtMultimedia import QSoundEffect
 from PyQt6.QtWidgets import QWidget
 
 from src.animations.animation import Animation
-from src.animations.OLD_animation_label import AnimationLabel
+from src.animations.animation_font import AnimationFont
 from src.animations.animation_point_f import AnimationPointF
+from src.animations.animation_text import AnimationText
 from src.animations.dynamics.directional_animation import DirectionalAnimation
 from src.animations.dynamics.parabola_animation import ParabolaAnimation
 from src.animations.dynamics.swivel_animation import SwivelAnimation
@@ -28,7 +29,7 @@ class AnimationFactory(QObject):
     Factory class responsible for creating Animation instances based on configuration.
     """
 
-    POSITION_MAP: Dict[str, QPointF] = {
+    ANIMATION_POSITION_MAP: Dict[str, QPointF] = {
         "Top-Left": QPointF(0.0, 0.0),
         "Top-Center": QPointF(TEMPORARY_WIDGET_WIDTH / 2.0, 0.0),
         "Top-Right": QPointF(TEMPORARY_WIDGET_WIDTH, 0.0),
@@ -40,14 +41,7 @@ class AnimationFactory(QObject):
         "Bottom-Right": QPointF(TEMPORARY_WIDGET_WIDTH, TEMPORARY_WIDGET_HEIGHT)
     }
 
-    DIRECTION_MAP: Dict[str, float] = {
-        "Left": -1.0,
-        "Right": 1.0,
-        "Up": -1.0,
-        "Down": 1.0
-    }
-
-    EASING_MAP: Dict[str, QEasingCurve.Type] = {
+    ANIMATION_EASING_MAP: Dict[str, QEasingCurve.Type] = {
         "Linear": QEasingCurve.Type.Linear,
         "In-Quadratic": QEasingCurve.Type.InQuad,
         "Out-Quadratic": QEasingCurve.Type.OutQuad,
@@ -91,43 +85,63 @@ class AnimationFactory(QObject):
         "Out-In-Bounce": QEasingCurve.Type.OutInBounce
     }
 
-    JIGGLE_MAP: Dict[str, int] = {
+    ANIMATION_JIGGLE_MAP: Dict[str, int] = {
         "Low": 75,
         "Medium": 50,
         "High": 25
     }
 
-    CAPITALIZATION_MAP: Dict[str, QFont.Capitalization] = {
-        "MixedCase": QFont.Capitalization.MixedCase,
-        "AllLowercase": QFont.Capitalization.AllLowercase,
-        "AllUppercase": QFont.Capitalization.AllUppercase,
-        "Capitalize": QFont.Capitalization.Capitalize,
-        "SmallCaps": QFont.Capitalization.SmallCaps
+    FONT_CAPITALIZATION_MAP: Dict[str, QFont.Capitalization] = {
+        "Normal": QFont.Capitalization.MixedCase,
+        "All-Lowercase": QFont.Capitalization.AllLowercase,
+        "All-Uppercase": QFont.Capitalization.AllUppercase,
+        "Capitalize-Words": QFont.Capitalization.Capitalize,
+        "Small-Caps": QFont.Capitalization.SmallCaps
     }
 
-    STRETCH_MAP: Dict[str, QFont.Stretch] = {
+    FONT_STRETCH_MAP: Dict[str, QFont.Stretch] = {
         "Unstretched": QFont.Stretch.Unstreched,
-        "AnyStretch": QFont.Stretch.AnyStretch,
-        "UltraCondensed": QFont.Stretch.UltraCondensed,
-        "ExtraCondensed": QFont.Stretch.ExtraCondensed,
+        "Any-Stretch": QFont.Stretch.AnyStretch,
+        "Ultra-Condensed": QFont.Stretch.UltraCondensed,
+        "Extra-Condensed": QFont.Stretch.ExtraCondensed,
         "Condensed": QFont.Stretch.Condensed,
-        "SemiCondensed": QFont.Stretch.SemiCondensed,
-        "SemiExpanded": QFont.Stretch.SemiExpanded,
+        "Semi-Condensed": QFont.Stretch.SemiCondensed,
+        "Semi-Expanded": QFont.Stretch.SemiExpanded,
         "Expanded": QFont.Stretch.Expanded,
-        "ExtraExpanded": QFont.Stretch.ExtraExpanded,
-        "UltraExpanded": QFont.Stretch.UltraExpanded,
+        "Extra-Expanded": QFont.Stretch.ExtraExpanded,
+        "Ultra-Expanded": QFont.Stretch.UltraExpanded
     }
 
-    WEIGHT_MAP: Dict[str, QFont.Weight] = {
+    FONT_WEIGHT_MAP: Dict[str, QFont.Weight] = {
         "Normal": QFont.Weight.Normal,
         "Thin": QFont.Weight.Thin,
-        "ExtraLight": QFont.Weight.ExtraLight,
+        "Extra-Light": QFont.Weight.ExtraLight,
         "Light": QFont.Weight.Light,
         "Medium": QFont.Weight.Medium,
-        "DemiBold": QFont.Weight.DemiBold,
+        "Demi-Bold": QFont.Weight.DemiBold,
         "Bold": QFont.Weight.Bold,
-        "ExtraBold": QFont.Weight.ExtraBold,
-        "Black": QFont.Weight.Black,
+        "Extra-Bold": QFont.Weight.ExtraBold,
+        "Black": QFont.Weight.Black
+    }
+
+    PEN_STYLE_MAP: Dict[str, Qt.PenStyle] = {
+        "Solid": Qt.PenStyle.SolidLine,
+        "Dash": Qt.PenStyle.DashLine,
+        "Dot": Qt.PenStyle.DotLine,
+        "Dash-Dot": Qt.PenStyle.DashDotLine,
+        "Dash-Dot-Dot": Qt.PenStyle.DashDotDotLine
+    }
+
+    PEN_CAP_STYLE_MAP: Dict[str, Qt.PenCapStyle] = {
+        "Square": Qt.PenCapStyle.SquareCap,
+        "Flat": Qt.PenCapStyle.FlatCap,
+        "Round": Qt.PenCapStyle.RoundCap
+    }
+
+    PEN_JOIN_STYLE_MAP: Dict[str, Qt.PenJoinStyle] = {
+        "Bevel": Qt.PenJoinStyle.BevelJoin,
+        "Miter": Qt.PenJoinStyle.MiterJoin,
+        "Round": Qt.PenJoinStyle.RoundJoin
     }
 
     def __init__(self, parent=None) -> None:
@@ -135,7 +149,7 @@ class AnimationFactory(QObject):
         # noinspection PyArgumentList
         self.font_database: QFontDatabase = QFontDatabase()
 
-    def build_animation(self, config: Dict[str, Any]) -> Optional[Animation]:
+    def build_animation(self, config: Dict[str, Any], message: str = "Unassigned Message") -> Optional[Animation]:
         """
         Builds an Animation instance based on the provided configuration.
 
@@ -144,45 +158,62 @@ class AnimationFactory(QObject):
 
         Returns:
             Optional[Animation]: The created Animation instance or None if creation failed.
+            :param config:
+            :param message:
         """
         try:
             parent = self.parent()
             animation_type: str = config.get("type")
             sound: QSoundEffect = self._get_sound_effect(config.get("sound"))
-            duration: int = int(config.get("duration", 2.25) * 1000)
-            starting_position: QPointF = self.POSITION_MAP.get(
-                config.get("starting_position", "Top-Left")
-            )
+            duration: int = int(config.get("duration") * 1000)
+            starting_position: QPointF = self.ANIMATION_POSITION_MAP.get(config.get("starting_position"))
             fade_in: bool = config.get("fade_in", False)
             fade_out: bool = config.get("fade_out", False)
-            fade_in_percentage: float = config.get("fade_in_percentage", 0.0)
+            fade_in_percentage: float = config.get("fade_in_percentage")
             fade_in_duration: int = self._get_phase_duration(duration, fade_in_percentage)
-            fade_out_percentage: float = config.get("fade_out_percentage", 0.0)
+            fade_out_percentage: float = config.get("fade_out_percentage")
             fade_out_duration: int = self._get_phase_duration(duration, fade_out_percentage)
             fade_out_delay: int = self._get_fade_out_delay(duration, fade_out_duration)
-
-            fade_in_easing_style: QEasingCurve.Type = self.EASING_MAP.get(
-                config.get("fade_in_easing_style", "Linear"),
-                QEasingCurve.Type.Linear
+            fade_in_easing_style: QEasingCurve.Type = (
+                self.ANIMATION_EASING_MAP.get(config.get("fade_in_easing_style"))
             )
-            fade_out_easing_style: QEasingCurve.Type = self.EASING_MAP.get(
-                config.get("fade_out_easing_style", "Linear"),
-                QEasingCurve.Type.Linear
+            fade_out_easing_style: QEasingCurve.Type = (
+                self.ANIMATION_EASING_MAP.get(config.get("fade_out_easing_style"))
             )
 
-            label: AnimationLabel = AnimationLabel(
-                text=config.get("text"),
-                icon_pixmap=self._get_icon_pixmap(config.get("icon")),
+            text_font: AnimationFont = AnimationFont(
                 font_type=config.get("font_type"),
                 font_size=config.get("font_size"),
-                font_color=config.get("font_color"),
-                font_outline=config.get("font_outline"),
-                font_outline_color=config.get("font_outline_color"),
-                font_drop_shadow=config.get("font_drop_shadow"),
+                font_weight=self.FONT_WEIGHT_MAP.get(config.get("font_weight")),
+                font_capitalization=self.FONT_CAPITALIZATION_MAP.get(config.get("font_capitalization")),
+                font_stretch=self.FONT_STRETCH_MAP.get(config.get("font_stretch")),
+                font_letter_spacing=config.get("font_letter_spacing"),
+                font_word_spacing=config.get("font_word_spacing"),
                 font_italic=config.get("font_italic"),
-                font_bold=config.get("font_bold"),
-                font_underline=config.get("font_underline"),
-                icon_position=config.get("icon_position"),
+                font_kerning=config.get("font_kerning"),
+                font_overline=config.get("font_overline"),
+                font_strikethrough=config.get("font_strikethrough"),
+                font_underline=config.get("font_underline")
+            )
+
+            text_outline_pen: QPen = QPen(
+                QColor(config.get("outline_color")),
+                int(config.get("outline_thickness")) * 2,
+                self.PEN_STYLE_MAP.get(config.get("outline_pen_style")),
+                self.PEN_CAP_STYLE_MAP.get(config.get("outline_pen_cap_style")),
+                self.PEN_JOIN_STYLE_MAP.get(config.get("outline_pen_join_style"))
+            )
+
+            text: AnimationText = AnimationText(
+                text_font=text_font,
+                text_message=message,
+                text_color=config.get("text_color"),
+                outline=config.get("outline"),
+                outline_pen=text_outline_pen,
+                drop_shadow=config.get("drop_shadow"),
+                drop_shadow_offset=config.get("drop_shadow_offset"),
+                drop_shadow_blur_radius=config.get("drop_shadow_blur_radius"),
+                drop_shadow_color=config.get("drop_shadow_color"),
                 parent=self.parent()
             )
 
@@ -193,12 +224,12 @@ class AnimationFactory(QObject):
                 return self._build_dynamic_animation(config, animation_type, sound,
                                                      duration, starting_position, fade_in, fade_out,
                                                      fade_in_duration, fade_out_duration, fade_out_delay,
-                                                     fade_in_easing_style, fade_out_easing_style, label, parent)
+                                                     fade_in_easing_style, fade_out_easing_style, text, parent)
             elif parent_type == "Static":
                 return self._build_static_animation(config, animation_type, sound,
                                                     duration, starting_position, fade_in, fade_out,
                                                     fade_in_duration, fade_out_duration, fade_out_delay,
-                                                    fade_in_easing_style, fade_out_easing_style, label, parent)
+                                                    fade_in_easing_style, fade_out_easing_style, text, parent)
             else:
                 logging.error("Unknown animation type: %s", animation_type)
                 return None
@@ -221,7 +252,7 @@ class AnimationFactory(QObject):
             fade_out_delay: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
-            label: AnimationLabel,
+            text_item: AnimationText,
             parent=None
     ) -> Optional[Animation]:
         """
@@ -240,21 +271,16 @@ class AnimationFactory(QObject):
             fade_out_delay (int): Fade out delay.
             fade_in_easing_style (QEasingCurve.Type): Easing style for fade in.
             fade_out_easing_style (QEasingCurve.Type): Easing style for fade out.
-            label (AnimationLabel): Label associated with the animation.
+            text_item (AnimationText): Label associated with the animation.
 
         Returns:
             Optional[Animation]: The created dynamic Animation instance or None.
         """
         try:
-            ending_position: QPointF = self.POSITION_MAP.get(
+            ending_position: QPointF = self.ANIMATION_POSITION_MAP.get(
                 config.get("ending_position", "Top-Left")
             )
-            """ Can't find a purpose for this, yet
-                direction: Tuple[float, float] = (
-                self.DIRECTION_MAP.get(config.get("horizontal_direction", "Right"), 1.0),
-                self.DIRECTION_MAP.get(config.get("vertical_direction", "Down"), 1.0)
-            )"""
-            easing_style: QEasingCurve.Type = self.EASING_MAP.get(
+            easing_style: QEasingCurve.Type = self.ANIMATION_EASING_MAP.get(
                 config.get("easing_style", "Linear"),
                 QEasingCurve.Type.Linear
             )
@@ -272,7 +298,7 @@ class AnimationFactory(QObject):
                     fade_out_delay=fade_out_delay,
                     fade_in_easing_style=fade_in_easing_style,
                     fade_out_easing_style=fade_out_easing_style,
-                    label=label,
+                    text_object=text_item,
                     ending_position=ending_position,
                     easing_style=easing_style,
                     parent=parent
@@ -297,7 +323,7 @@ class AnimationFactory(QObject):
                     fade_out_delay=fade_out_delay,
                     fade_in_easing_style=fade_in_easing_style,
                     fade_out_easing_style=fade_out_easing_style,
-                    label=label,
+                    text_object=text_item,
                     ending_position=ending_position,
                     easing_style=easing_style,
                     parabola_points=parabola_points,
@@ -323,7 +349,7 @@ class AnimationFactory(QObject):
                     fade_out_delay=fade_out_delay,
                     fade_in_easing_style=fade_in_easing_style,
                     fade_out_easing_style=fade_out_easing_style,
-                    label=label,
+                    text_object=text_item,
                     ending_position=ending_position,
                     easing_style=easing_style,
                     phase_1_duration=self._get_phase_duration(duration, phase_1_percentage),
@@ -356,7 +382,7 @@ class AnimationFactory(QObject):
             fade_out_delay: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
-            label: AnimationLabel,
+            text_item: AnimationText,
             parent=None
     ) -> Optional[Animation]:
         """
@@ -375,14 +401,14 @@ class AnimationFactory(QObject):
             fade_out_delay (int): Fade out delay.
             fade_in_easing_style (QEasingCurve.Type): Easing style for fade in.
             fade_out_easing_style (QEasingCurve.Type): Easing style for fade out.
-            label (AnimationLabel): Label associated with the animation.
+            text_item (AnimationText): Label associated with the animation.
 
         Returns:
             Optional[Animation]: The created static Animation instance or None.
         """
         try:
             jiggle: bool = config.get("jiggle", False)
-            jiggle_intensity: int = self.JIGGLE_MAP.get(config.get("jiggle_intensity", "Medium"), 50)
+            jiggle_intensity: int = self.ANIMATION_JIGGLE_MAP.get(config.get("jiggle_intensity", "Medium"), 50)
 
             if animation_type == "Stationary":
                 animation = StationaryAnimation(
@@ -397,7 +423,7 @@ class AnimationFactory(QObject):
                     fade_out_delay=fade_out_delay,
                     fade_in_easing_style=fade_in_easing_style,
                     fade_out_easing_style=fade_out_easing_style,
-                    label=label,
+                    text_object=text_item,
                     jiggle=jiggle,
                     jiggle_intensity=jiggle_intensity,
                     parent=parent
@@ -406,7 +432,7 @@ class AnimationFactory(QObject):
                 scale_percentage: float = config.get("scale_percentage", 1.70)
                 phase_1_percentage: float = config.get("phase_1_percentage", 0.50)
                 phase_2_percentage: float = config.get("phase_2_percentage", 0.50)
-                scale_easing_style: QEasingCurve.Type = self.EASING_MAP.get(
+                scale_easing_style: QEasingCurve.Type = self.ANIMATION_EASING_MAP.get(
                     config.get("scale_easing_style", "Linear"),
                     QEasingCurve.Type.Linear
                 )
@@ -422,7 +448,7 @@ class AnimationFactory(QObject):
                     fade_out_delay=fade_out_delay,
                     fade_in_easing_style=fade_in_easing_style,
                     fade_out_easing_style=fade_out_easing_style,
-                    label=label,
+                    text_object=text_item,
                     jiggle=jiggle,
                     jiggle_intensity=jiggle_intensity,
                     scale_percentage=scale_percentage,

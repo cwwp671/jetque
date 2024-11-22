@@ -3,7 +3,7 @@
 from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation, QSequentialAnimationGroup, QPauseAnimation
 from PyQt6.QtMultimedia import QSoundEffect
 
-from src.animations.animation_text_item import AnimationTextItem
+from src.animations.animation_text import AnimationText
 from src.animations.static_animation import StaticAnimation
 
 
@@ -25,7 +25,7 @@ class PowAnimation(StaticAnimation):
             fade_out_delay: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
-            label: AnimationTextItem,
+            text_object: AnimationText,
             jiggle: bool,
             jiggle_intensity: int,
             scale_percentage: float,
@@ -49,7 +49,7 @@ class PowAnimation(StaticAnimation):
             fade_out_delay (int): The fade-out delay in milliseconds.
             fade_in_easing_style (QEasingCurve.Type): The easing curve for fade-in.
             fade_out_easing_style (QEasingCurve.Type): The easing curve for fade-out.
-            label (AnimationTextItem): The label associated with the animation.
+            text_object (AnimationText): The label associated with the animation.
             jiggle (bool): Whether the jiggle effect is enabled.
             jiggle_intensity (int): The intensity of the jiggle effect in milliseconds.
             scale_percentage (float): The amount the text scales.
@@ -70,7 +70,7 @@ class PowAnimation(StaticAnimation):
             fade_out_delay=fade_out_delay,
             fade_in_easing_style=fade_in_easing_style,
             fade_out_easing_style=fade_out_easing_style,
-            label=label,
+            text_object=text_object,
             jiggle=jiggle,
             jiggle_intensity=jiggle_intensity,
             parent=parent

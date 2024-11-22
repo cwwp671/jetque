@@ -3,7 +3,7 @@
 from PyQt6.QtCore import QEasingCurve, QPointF
 from PyQt6.QtMultimedia import QSoundEffect
 
-from src.animations.animation_text_item import AnimationTextItem
+from src.animations.animation_text import AnimationText
 from src.animations.dynamic_animation import DynamicAnimation
 
 
@@ -27,7 +27,7 @@ class DirectionalAnimation(DynamicAnimation):
             fade_out_delay: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
-            label: AnimationTextItem,
+            text_object: AnimationText,
             ending_position: QPointF,
             easing_style: QEasingCurve.Type,
             parent=None
@@ -47,7 +47,7 @@ class DirectionalAnimation(DynamicAnimation):
             fade_out_delay (int): The fade-out delay in milliseconds.
             fade_in_easing_style (QEasingCurve.Type): The easing curve for fade-in.
             fade_out_easing_style (QEasingCurve.Type): The easing curve for fade-out.
-            label (AnimationTextItem): The label associated with the animation.
+            text_object (AnimationText): The label associated with the animation.
             ending_position (QPointF): The ending position of the animation.
             easing_style (QEasingCurve.Type): The easing curve type for the animation.
             parent: The parent object.
@@ -64,7 +64,7 @@ class DirectionalAnimation(DynamicAnimation):
             fade_out_delay=fade_out_delay,
             fade_in_easing_style=fade_in_easing_style,
             fade_out_easing_style=fade_out_easing_style,
-            label=label,
+            text_object=text_object,
             ending_position=ending_position,
             easing_style=easing_style,
             parent=parent
