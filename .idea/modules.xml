@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/jetque.iml" filepath="$PROJECT_DIR$/jetque.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jetque_project.iml" filepath="$PROJECT_DIR$/jetque_project.iml" />
     </modules>
   </component>
 </project>
