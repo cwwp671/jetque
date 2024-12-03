@@ -1,7 +1,10 @@
 # jetque.py
-import logging
+
 import sys
+import logging
+
 from jetque.jetque import JetQue
+
 
 if __name__ == "__main__":
 
