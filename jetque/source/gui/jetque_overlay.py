@@ -1,39 +1,66 @@
 # jetque/source/gui/jetque_overlay.py
 
 import logging
+from typing import List, Optional
 
+from PyQt6.QtCore import QObject, QRect
 from PyQt6.QtWidgets import QGraphicsScene
 
+from jetque.source.animations.animation_anchor import AnimationAnchor
 from jetque.source.gui.jetque_view import JetQueView
 
 
 class JetQueOverlay(QGraphicsScene):
-    def __init__(self, geometry, parent=None):
+    """Overlay scene for JetQue, managing anchor points and configuration modes."""
+
+    def __init__(self, geometry: QRect, parent: Optional[QObject] = None) -> None:
+        """Initialize the overlay scene.
+
+        Args:
+            geometry (QRect): The available screen geometry.
+            parent (Optional[QObject], optional): Parent object. Defaults to None.
+        """
         super().__init__(parent)
         logging.debug("JetQueOverlay: Initializing.")
         self.view: JetQueView = JetQueView(self, geometry)
         self.is_configuration_mode: bool = False
-        self.anchor_points = []
+        self.anchor_points: List[AnimationAnchor] = []
 
-    def add_anchor_point(self, anchor_point):
+    def add_anchor_point(self, anchor_point: AnimationAnchor) -> None:
+        """Add an anchor point to the scene.
+
+        Args:
+            anchor_point (AnimationAnchor): The anchor point to add.
+        """
         self.addItem(anchor_point)
+        anchor_point.hide()
         self.anchor_points.append(anchor_point)
         anchor_point.positionChanged.connect(self.view.update_mask)
 
-    def switch_mode(self):
-        logging.debug("Switching modes.")
+    def configuration_mode(self) -> None:
+        """Switch the overlay to configuration mode."""
+        logging.debug("Configuration mode on.")
+        self.is_configuration_mode = True
 
+        for anchor_point in self.anchor_points:
+            anchor_point.show()
+
+        self.view.configuration_mode()
+
+    def run_mode(self) -> None:
+        """Switch the overlay to run mode."""
+        logging.debug("Configuration mode off.")
+        self.is_configuration_mode = False
+
+        for anchor_point in self.anchor_points:
+            anchor_point.hide()
+
+        self.view.run_mode()
+
+    def switch_mode(self) -> None:
+        """Toggle between run mode and configuration mode."""
+        logging.debug("Switching modes.")
         if self.is_configuration_mode:
             self.run_mode()
         else:
             self.configuration_mode()
-
-    def run_mode(self):
-        logging.debug("Configuration mode off.")
-        self.is_configuration_mode = False
-        self.view.run_mode()
-
-    def configuration_mode(self):
-        logging.debug("Configuration mode on.")
-        self.is_configuration_mode = True
-        self.view.configuration_mode()
