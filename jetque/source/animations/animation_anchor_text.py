@@ -1,16 +1,17 @@
 # jetque/source/animations/animation_anchor_text.py
-
+import logging
 import re
 from typing import Optional
 
-from PyQt6.QtCore import QRectF, Qt, pyqtSignal
-from PyQt6.QtGui import QPainter, QFont
+from PyQt6.QtCore import QRectF, Qt, pyqtSignal, QEvent
+from PyQt6.QtGui import QColor, QTextCursor, QTextCharFormat, QFont
 from PyQt6.QtWidgets import (
     QGraphicsItem,
     QGraphicsObject,
     QGraphicsTextItem,
     QStyleOptionGraphicsItem,
-    QWidget
+    QWidget,
+    QGraphicsScene
 )
 
 
@@ -36,50 +37,68 @@ class AnimationAnchorText(QGraphicsObject):
         self.group_name: str = group_name
         self.is_start: bool = is_start
         self.parent_item: Optional[QGraphicsItem] = parent
+
         self.setFlags(
             QGraphicsItem.GraphicsItemFlag.ItemIsSelectable
             | QGraphicsItem.GraphicsItemFlag.ItemSendsScenePositionChanges
             | QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges
+            | QGraphicsItem.GraphicsItemFlag.ItemIsFocusable
         )
 
-        position_label: str = 'Start' if self.is_start else 'End'
-        text_font: QFont = QFont("Helvetica", 12, QFont.Weight.Bold, False)
+        # Initialize the single QGraphicsTextItem
+        self.text_item: QGraphicsTextItem = QGraphicsTextItem(self)
+        self.text_item.setFont(QFont("Helvetica", 12, QFont.Weight.Bold))
+        self.text_item.setDefaultTextColor(QColor("black"))
+        self.text_item.setAcceptHoverEvents(True)
 
-        # Non-editable text item
-        self.label_text_item: QGraphicsTextItem = QGraphicsTextItem(
-            f"{self.group_name} {position_label}: ", self
+        # Set up the initial text with formatting
+        self._update_text()
+
+        # Connect the text change signal
+        self.text_item.document().contentsChanged.connect(self._on_content_changed)
+
+        # Track editing state
+        self.is_editing = False
+
+    def _update_text(self) -> None:
+        """Construct and set the formatted text for the text_item."""
+        position_label = 'Start' if self.is_start else 'End'
+        # Retrieve current position
+        if self.parent_item:
+            x = int(self.parent_item.x())
+            y = int(self.parent_item.y())
+        else:
+            x, y = 0, 0
+
+        # Construct HTML formatted text with dynamic x and y
+        formatted_text = (
+            f"{self.group_name} {position_label} "
+            f"<span style='color:red;'>[{x}, </span>"
+            f"<span style='color:green;'>{y}]</span>"
         )
-        self.label_text_item.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
-        self.label_text_item.setFont(text_font)
+        self.text_item.setHtml(formatted_text)
 
-        # Editable text item
-        x = self.parent_item.x() if self.parent_item else 0
-        y = self.parent_item.y() if self.parent_item else 0
-        self.position_text_item: QGraphicsTextItem = QGraphicsTextItem(f"[{int(x)}, {int(y)}]", self)
-        self.position_text_item.setTextInteractionFlags(Qt.TextInteractionFlag.TextEditorInteraction)
-        self.position_text_item.setFont(text_font)
-
-        # Connect the text change signal to the slot
-        self.label_text_item.document().contentsChanged.connect(self._on_content_changed)
-        self.position_text_item.document().contentsChanged.connect(self._on_position_text_changed)
-
-        # Position the text items next to each other
-
-        label_width = self.label_text_item.boundingRect().width()
-        self.label_text_item.setPos(-(label_width / 2.0), 0)
-        self.position_text_item.setPos(label_width - (label_width / 2.0), 0)
+        # Recalculate and adjust the bounding rectangle with padding
+        bounding = self.text_item.document().size()
+        self.prepareGeometryChange()
+        self.text_item.setPos(-bounding.width() / 2.0, -bounding.height() / 2.0)
+        self.update()
 
     def boundingRect(self) -> QRectF:
-        """Return the bounding rectangle encompassing all child items.
+        """Return the bounding rectangle encompassing the text item with padding.
 
         Returns:
             QRectF: The bounding rectangle.
         """
-        return self.childrenBoundingRect()
+        size = self.text_item.document().size()
+        return QRectF(-size.width() / 2.0,
+                      -size.height() / 2.0,
+                      size.width(),
+                      size.height())
 
     def paint(
             self,
-            painter: QPainter,
+            painter,
             option: QStyleOptionGraphicsItem,
             widget: Optional[QWidget] = None,
     ) -> None:
@@ -88,30 +107,85 @@ class AnimationAnchorText(QGraphicsObject):
 
     def update_position(self) -> None:
         """Update the position text based on the parent item's position."""
-        if self.parent_item:
-            self.prepareGeometryChange()
-            x = self.parent_item.x()
-            y = self.parent_item.y()
-            self.position_text_item.setPlainText(f"[{int(x)}, {int(y)}]")
+        self._update_text()
 
     def _on_content_changed(self) -> None:
-        """Handle content changes by updating geometry."""
-        self.prepareGeometryChange()
-        self.contentChanged.emit()
+        """Handle content changes by marking the item as edited."""
+        if not self.is_editing:
+            # logging.debug("Content changed when not in edit mode (moving).")
+            self.prepareGeometryChange()
+            self.contentChanged.emit()
 
-    def _on_position_text_changed(self) -> None:
-        """Handle changes in the position text and update the parent item's position."""
-        self.prepareGeometryChange()
-        text = self.position_text_item.toPlainText()
-        match = re.match(r'\s*\[\s*([-\d.]+)\s*,\s*([-\d.]+)\s*]\s*', text)
-        if match:
-            x_str, y_str = match.groups()
-            try:
-                x = float(x_str)
-                y = float(y_str)
-                if self.parent_item:
-                    self.parent_item.setPos(x, y)
-            except ValueError:
-                pass  # Invalid numbers entered
+    def keyPressEvent(self, event) -> None:
+        """Handle key press events to manage editing behavior."""
+        logging.debug("AnimationAnchorText keyPressEvent")
+        if self.is_editing:
+            if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+                # Commit changes when Enter is pressed
+                self._commit_edit()
+                return
+            elif event.key() == Qt.Key.Key_Escape:
+                # Cancel editing on Escape
+                self.is_editing = False
+                self._update_text()
+                self.text_item.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
+                self.text_item.clearFocus()
+                return
+            else:
+                # Allow other keys to be processed normally
+                super().keyPressEvent(event)
         else:
-            pass  # Invalid format entered
+            super().keyPressEvent(event)
+
+    def _commit_edit(self) -> None:
+        """Commit the edit by validating and updating the position."""
+        self.is_editing = False
+        text = self.text_item.toPlainText()
+
+        # Extract x and y using regex with dynamic digit handling
+        # Pattern: "{Group Name} {Start|End} [x, y]"
+        pattern = rf"^{re.escape(self.group_name)}\s+(Start|End)\s+\[\s*(-?\d+)\s*,\s*(-?\d+)\s*]$"
+        match = re.match(pattern, text)
+        if match:
+            _, x_str, y_str = match.groups()
+            try:
+                x = int(x_str)
+                y = int(y_str)
+
+                # Validate against scene dimensions
+                scene = self.scene()
+                if scene:
+                    scene_rect = scene.sceneRect()
+                    scene_width = int(scene_rect.width())
+                    scene_height = int(scene_rect.height())
+                else:
+                    scene_width = 1920  # Default width
+                    scene_height = 1080  # Default height
+
+                logging.debug("Edit confirmed, emitting content change.")
+
+                if x <= scene_width and y <= scene_height:
+                    self.prepareGeometryChange()
+                    self.contentChanged.emit()
+                else:
+                    self._update_text()
+            except ValueError:
+                # Invalid number entered; revert to previous position
+                self._update_text()
+        else:
+            # Invalid format entered; revert to previous position
+            self._update_text()
+
+        self.text_item.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
+        self.text_item.clearFocus()
+
+    def mousePressEvent(self, event) -> None:
+        """Handle mouse press to initiate editing."""
+        logging.debug("AnimationAnchorText Mouse Event")
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.is_editing = True
+            self.text_item.setTextInteractionFlags(Qt.TextInteractionFlag.TextEditorInteraction)
+            self.text_item.setFocus(Qt.FocusReason.MouseFocusReason)
+            # self.text_item.setFocus()
+            logging.debug(f"Left Click registered. is_editing={self.is_editing}")
+        super().mousePressEvent(event)
