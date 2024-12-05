@@ -6,7 +6,7 @@ from typing import List, Optional
 from PyQt6.QtCore import QObject, QRect
 from PyQt6.QtWidgets import QGraphicsScene
 
-from jetque.source.animations.animation_anchor import AnimationAnchor
+from jetque.source.animations.anchor_object import AnchorObject
 from jetque.source.gui.jetque_view import JetQueView
 
 
@@ -24,13 +24,13 @@ class JetQueOverlay(QGraphicsScene):
         logging.debug("JetQueOverlay: Initializing.")
         self.view: JetQueView = JetQueView(self, geometry)
         self.is_configuration_mode: bool = False
-        self.anchor_points: List[AnimationAnchor] = []
+        self.anchor_points: List[AnchorObject] = []
 
-    def add_anchor_point(self, anchor_point: AnimationAnchor) -> None:
+    def add_anchor_point(self, anchor_point: AnchorObject) -> None:
         """Add an anchor point to the scene.
 
         Args:
-            anchor_point (AnimationAnchor): The anchor point to add.
+            anchor_point (AnchorObject): The anchor point to add.
         """
         self.addItem(anchor_point)
         anchor_point.hide()

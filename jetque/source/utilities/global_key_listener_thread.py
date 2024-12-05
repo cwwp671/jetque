@@ -35,7 +35,7 @@ class GlobalKeyListenerThread(QThread):
         elif key in {keyboard.Key.cmd, keyboard.Key.cmd_l, keyboard.Key.cmd_r}:
             self.current_modifiers.add('Cmd')
 
-        # self.logger.debug(f"Key pressed: {key_char}, Modifiers: {self.current_modifiers}")
+        self.logger.debug(f"Key pressed: {key_char}, Modifiers: {self.current_modifiers}")
         self.key_pressed.emit(key_char, self.current_modifiers.copy())
 
     def on_release(self, key):

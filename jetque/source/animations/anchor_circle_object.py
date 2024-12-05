@@ -1,8 +1,8 @@
-# jetque/source/animations/animation_anchor_circle.py
+# jetque/source/animations/anchor_circle_object.py
 
 from typing import Any, Optional
 
-from PyQt6.QtCore import Qt, QRectF, pyqtSignal
+from PyQt6.QtCore import Qt, QRectF, pyqtSignal, QPointF
 from PyQt6.QtGui import QColor, QBrush, QPen, QPainter
 from PyQt6.QtWidgets import (
     QGraphicsItem,
@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
 )
 
 
-class AnimationAnchorCircle(QGraphicsObject):
+class AnchorCircleObject(QGraphicsObject):
     """Interactive circle item for animation anchors."""
 
     positionChanged = pyqtSignal()
@@ -94,7 +94,24 @@ class AnimationAnchorCircle(QGraphicsObject):
         Returns:
             Any: The result of the change.
         """
-        if change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged:
+        if change == QGraphicsItem.GraphicsItemChange.ItemPositionChange:
+            # value is the new position (QPointF)
+            new_pos = value
+            # Get the scene and view
+            scene = self.scene()
+            if scene:
+                views = scene.views()
+                if views:
+                    view = views[0]
+                    min_x = 0
+                    min_y = 0
+                    max_x = view.width()
+                    max_y = view.height()
+                    # Clamp the new position
+                    clamped_x = min(max(new_pos.x(), min_x), max_x)
+                    clamped_y = min(max(new_pos.y(), min_y), max_y)
+                    return QPointF(clamped_x, clamped_y)
+        elif change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged:
             self.positionChanged.emit()
         return super().itemChange(change, value)
 

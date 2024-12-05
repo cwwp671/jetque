@@ -6,7 +6,7 @@ from typing import List
 
 from PyQt6.QtWidgets import QApplication
 
-from jetque.source.animations.animation_anchor import AnimationAnchor
+from jetque.source.animations.anchor_object import AnchorObject
 from jetque.source.gui.jetque_overlay import JetQueOverlay
 from jetque.source.gui.jetque_window import JetQueWindow
 from jetque.source.utilities.global_key_listener_thread import GlobalKeyListenerThread
@@ -28,7 +28,7 @@ class JetQue(QApplication):
 
         self.window: JetQueWindow = JetQueWindow()
         self.overlay: JetQueOverlay = JetQueOverlay(available_geometry)
-        test_anchor = AnimationAnchor("Incoming")
+        test_anchor = AnchorObject("Incoming")
         self.overlay.add_anchor_point(test_anchor)
 
         # Initialize and start the global key listener thread

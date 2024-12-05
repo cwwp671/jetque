@@ -1,5 +1,5 @@
 # jetque/source/gui/jetque_view.py
-
+import ctypes
 import logging
 from typing import Optional
 
@@ -12,6 +12,17 @@ from PyQt6.QtWidgets import (
     QGraphicsView,
     QWidget
 )
+
+# Windows API Constants
+GWL_EXSTYLE = -20
+WS_EX_TOOLWINDOW = 0x00000080
+WS_EX_NOACTIVATE = 0x08000000
+
+# Function to set extended window styles
+def set_window_ex_styles(hwnd, styles):
+    user32 = ctypes.windll.user32
+    current_styles = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+    user32.SetWindowLongW(hwnd, GWL_EXSTYLE, current_styles | styles)
 
 
 class JetQueView(QGraphicsView):
@@ -34,9 +45,11 @@ class JetQueView(QGraphicsView):
         logging.debug("Initializing.")
 
         self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint
+            Qt.WindowType.Tool
+            | Qt.WindowType.FramelessWindowHint
             | Qt.WindowType.WindowStaysOnTopHint
             | Qt.WindowType.WindowTransparentForInput
+            | Qt.WindowType.WindowDoesNotAcceptFocus
         )
 
         # Create a widget to render graphics using OpenGL
@@ -48,6 +61,7 @@ class JetQueView(QGraphicsView):
 
         # Enable a translucent background and antialiasing
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_AcceptDrops, False)
         self.setRenderHint(QPainter.RenderHint.Antialiasing)
         self.setRenderHint(QPainter.RenderHint.TextAntialiasing)
         self.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.FullViewportUpdate)
@@ -71,6 +85,11 @@ class JetQueView(QGraphicsView):
         self.stroker = QPainterPathStroker()
         self.stroker.setWidth(self.padding * 2.0)
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        hwnd = self.winId().__int__()
+        set_window_ex_styles(hwnd, WS_EX_NOACTIVATE)
+
     def configuration_mode(self) -> None:
         """Switch the view to configuration mode, enabling user interaction within a mask."""
         try:
@@ -78,13 +97,24 @@ class JetQueView(QGraphicsView):
 
             # Remove Qt.WindowTransparentForInput to make the window receive input events
             self.setWindowFlags(
-                Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
+                Qt.WindowType.Tool
+                | Qt.WindowType.FramelessWindowHint
+                | Qt.WindowType.WindowStaysOnTopHint
+                | Qt.WindowType.WindowDoesNotAcceptFocus
             )
 
             self.show()
             self.update_mask()  # Use a mask to only allow anchors to be manipulated
             self.viewport().update()
             self.repaint()
+
+            enabled_attributes = []
+            for attribute in Qt.WidgetAttribute:
+                if self.testAttribute(attribute):
+                    enabled_attributes.append(attribute)
+
+            for attr in enabled_attributes:
+                logging.debug(f"Widget Attribute {attr} is Enabled.")
 
         except Exception as e:
             logging.exception(f"Failed to switch to configuration mode with exception: {e}")
@@ -95,16 +125,26 @@ class JetQueView(QGraphicsView):
             logging.debug("Switching to active mode.")
 
             self.setWindowFlags(
-                Qt.WindowType.FramelessWindowHint
+                Qt.WindowType.Tool
+                | Qt.WindowType.FramelessWindowHint
                 | Qt.WindowType.WindowStaysOnTopHint
                 | Qt.WindowType.WindowTransparentForInput
+                | Qt.WindowType.WindowDoesNotAcceptFocus
             )
 
-            self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+            # self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
             self.clearMask()
             self.show()
             self.viewport().update()
             self.repaint()
+
+            enabled_attributes = []
+            for attribute in Qt.WidgetAttribute:
+                if self.testAttribute(attribute):
+                    enabled_attributes.append(attribute)
+
+            for attr in enabled_attributes:
+                logging.debug(f"Widget Attribute {attr} is Enabled.")
 
         except Exception as e:
             logging.exception(f"Failed to switch to active mode with exception: {e}")
