@@ -61,6 +61,7 @@ class JetQueView(QGraphicsView):
 
         # Enable a translucent background and antialiasing
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setAttribute(Qt.WidgetAttribute.WA_AcceptDrops, False)
         self.setRenderHint(QPainter.RenderHint.Antialiasing)
         self.setRenderHint(QPainter.RenderHint.TextAntialiasing)

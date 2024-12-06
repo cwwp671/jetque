@@ -54,9 +54,10 @@ class AnimationText(QGraphicsTextItem):
             parent: The parent widget.
             TODO ADD MISSING ARGUMENTS.
         """
-        super().__init__(parent)
+        super().__init__(parent=None)
 
         try:
+            self.setParent(parent)
             self.setFont(text_font)
             self.setPlainText(text_message)
             self.setDefaultTextColor(text_color)

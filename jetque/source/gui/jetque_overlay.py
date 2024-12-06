@@ -3,7 +3,7 @@
 import logging
 from typing import List, Optional
 
-from PyQt6.QtCore import QObject, QRect
+from PyQt6.QtCore import QObject, QRect, Qt
 from PyQt6.QtWidgets import QGraphicsScene
 
 from jetque.source.animations.anchor_object import AnchorObject

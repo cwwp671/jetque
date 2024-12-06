@@ -117,6 +117,7 @@ class Animation(QParallelAnimationGroup):
                 scene.removeItem(self.animation_object)
 
             # self.animation_object.deleteLater()
+        logging.debug("Deleting Animation Instance")
         self.deleteLater()
 
     def _play_sound(self) -> None:
