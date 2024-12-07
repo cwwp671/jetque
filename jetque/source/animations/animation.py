@@ -50,7 +50,6 @@ class Animation(QParallelAnimationGroup):
             parent: The parent object.
         """
         super().__init__(parent)
-
         # Initialize common attributes between all Animation children
         self.type: str = animation_type
         self.sound: QSoundEffect = sound
@@ -64,6 +63,9 @@ class Animation(QParallelAnimationGroup):
         self.fade_out_duration: int = fade_out_duration
         self.fade_out_delay: int = fade_out_delay
         self.fade_out_easing_style: QEasingCurve.Type = fade_out_easing_style
+        self.animation_object.setTransformOriginPoint(
+            self.animation_object.boundingRect().width() / 2.0,
+            self.animation_object.boundingRect().height() / 2.0)
         self.animation: QPropertyAnimation = QPropertyAnimation(self.animation_object, b"pos")
         self.animation.setDuration(self.duration)
         self.animation.setStartValue(self.starting_position)
@@ -110,15 +112,17 @@ class Animation(QParallelAnimationGroup):
         """
         Slot called when the animation finishes.
         """
-        if self.animation_object:
-            scene = self.animation_object.scene()
+        try:
+            if self.animation_object:
+                scene = self.animation_object.scene()
 
-            if scene:
-                scene.removeItem(self.animation_object)
+                if scene:
+                    scene.removeItem(self.animation_object)
 
-            # self.animation_object.deleteLater()
-        logging.debug("Deleting Animation Instance")
-        self.deleteLater()
+                logging.debug("Deleting Animation Object: %s", self.animation_object)
+                self.animation_object.deleteLater()
+        except Exception as e:
+            logging.exception("Failed to delete Animation Object: %s", e)
 
     def _play_sound(self) -> None:
         """

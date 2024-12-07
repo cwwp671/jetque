@@ -1,6 +1,8 @@
 # src/animations/statics/pow_animation.py
+import logging
 
-from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation, QSequentialAnimationGroup, QPauseAnimation
+from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation, QSequentialAnimationGroup, QPauseAnimation, \
+    QAbstractAnimation
 from PyQt6.QtMultimedia import QSoundEffect
 
 from jetque.source.animations.animation_text import AnimationText
@@ -81,7 +83,7 @@ class PowAnimation(StaticAnimation):
         self.scale_easing_style: QEasingCurve.Type = scale_easing_style
         self.phase_1_duration: int = phase_1_duration
         self.phase_2_duration: int = phase_2_duration
-        self.scale_animation = QPropertyAnimation(self.animation_object, b"pos")
+        self.scale_animation = QPropertyAnimation(self.animation_object, b"scale")
         self.scale_animation.setDuration(self.phase_1_duration)
         self.scale_animation.setStartValue(1.0)
         self.scale_animation.setKeyValueAt(0.5, self.scale_percentage)

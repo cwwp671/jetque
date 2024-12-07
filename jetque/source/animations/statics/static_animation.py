@@ -3,7 +3,7 @@
 import logging
 import random
 
-from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation
+from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation, QAbstractAnimation, QTimer
 from PyQt6.QtMultimedia import QSoundEffect
 
 from jetque.source.animations.animation import Animation
@@ -79,6 +79,9 @@ class StaticAnimation(Animation):
         )
 
         self.jiggle: bool = jiggle
+        self.removeAnimation(self.animation)
+        self.animation.deleteLater()
+        self.animation_object.setPos(starting_position)
 
         # Optional Jiggle effect
         if self.jiggle:
@@ -91,6 +94,19 @@ class StaticAnimation(Animation):
             self.jiggle_animation.setStartValue(self.starting_position)
             self.jiggle_animation.setEndValue(self.starting_position)
             self.addAnimation(self.jiggle_animation)
+
+    def start(self, policy=QAbstractAnimation.DeletionPolicy.DeleteWhenStopped) -> None:
+        """
+        Start the animation.
+
+        :param policy: Deletion policy for the animation.
+                       Tell the animation to delete if it is stopped manually with DeleteWhenStopped.
+        """
+        try:
+            super().start(policy)
+            QTimer.singleShot(self.duration, self.stop)
+        except Exception as e:
+            logging.exception("Failed to start StaticAnimation: %s", e)
 
     def _apply_jiggle(self) -> None:
         """

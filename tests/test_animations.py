@@ -1,12 +1,13 @@
 import sys
 import logging
-import weakref
 from typing import List
 
-from PyQt6.QtCore import QTimer, QEasingCurve, QPointF, QUrl, Qt
+from PyQt6.QtCore import QTimer, QEasingCurve, QPointF, QUrl, Qt, pyqtSlot
 from PyQt6.QtGui import QFont, QPen, QColor, QPixmap
+from PyQt6.QtMultimedia import QSoundEffect
 
 from jetque.jetque import JetQue
+from jetque.source.animations.animation import Animation
 from jetque.source.animations.animation_font import AnimationFont
 from jetque.source.animations.animation_text import AnimationText
 from jetque.source.animations.dynamics.directional_animation import DirectionalAnimation
@@ -15,30 +16,112 @@ from jetque.source.animations.dynamics.swivel_animation import SwivelAnimation
 from jetque.source.animations.statics.pow_animation import PowAnimation
 from jetque.source.animations.statics.stationary_animation import StationaryAnimation
 from jetque.source.animations.animation_point_f import AnimationPointF
-from PyQt6.QtMultimedia import QSoundEffect
 
 
 class AnimationTester(JetQue):
     def __init__(self, sys_argv: List[str]) -> None:
         super().__init__(sys_argv)
-        # Set up anchor positions
-
-        # self.overlay.anchor_points[0].start_circle.setPos(1280.0, 700.0)
-        # self.overlay.anchor_points[0].end_circle.setPos(2560.0, 700.0)
-        # self.overlay.anchor_points[0].start_text.update_position()
-        # self.overlay.anchor_points[0].end_text.update_position()
-        # self.overlay.run_mode()
-
         self.overlay.setParent(self)
-
-        # We will store animations to ensure we can check memory later
         self.active_animations = []
+        self.pow_timer = QTimer(self)
+        self.pow_timer.timeout.connect(self.run_pow_animation_test)
+        self.pow_timer.start(5250)
+        self.swivel_timer = QTimer(self)
+        self.swivel_timer.timeout.connect(self.run_swivel_animation_test)
+        self.swivel_timer.start(2750)
 
-    def _create_base_animation_text(self) -> AnimationText:
+    def start_animation(self, animation) -> None:
+        """
+        Starts the given animation and adds it to the appropriate active animations list.
 
+        Args:
+            animation (Animation): The animation instance to start.
+        """
+        try:
+            animation.finished.connect(lambda: self.handle_animation_finished(animation))
+            if animation:
+                self.active_animations.append(animation)
+                self.request_display(animation.animation_object)
+                animation.start()
+                logging.info("Animation started: %s", animation)
+            else:
+                logging.warning("Attempted to start invalid animation type: %s", type(animation))
+        except Exception as e:
+            logging.exception("Error in start_animation: %s", e)
+
+    def stop_animation(self, animation) -> None:
+        """
+        Stops the given animation and removes it from the active animations list.
+
+        Args:
+            animation (Animation): The animation instance to stop.
+        """
+        try:
+            animation.stop()
+
+            if animation:
+                self.clean_up_animation(animation)
+
+            logging.info("Animation stopped: %s", animation)
+        except Exception as e:
+            logging.exception("Error in stop_animation: %s", e)
+
+    def clean_up_animation(self, animation) -> None:
+        """
+        Cleans up the animation by removing it from active lists and deleting it safely.
+
+        Args:
+            animation (Animation): The animation instance to clean up.
+        """
+        try:
+            removed = False
+            if animation:
+                if animation in self.active_animations:
+                    self.active_animations.remove(animation)
+                    removed = True
+
+                if removed:
+                    animation.deleteLater()
+                    logging.debug("Animation cleaned up and deleted: %s", animation)
+                else:
+                    logging.warning("Attempted to clean up animation not found in active lists: %s", animation)
+        except Exception as e:
+            logging.exception("Error in clean_up_animation: %s", e)
+
+    def request_display(self, animation_object) -> None:
+        """
+        Sends a request to the Overlay to display the animation.
+
+        Args:
+            animation_object (AnimationText): The animation instance's animation_object to be displayed.
+        """
+        try:
+            if animation_object:
+                self.overlay.addItem(animation_object)
+                logging.debug("Animation Item added to scene: %s", animation_object)
+            else:
+                logging.warning("Attempted to add Animation Item to scene: %s", animation_object)
+        except Exception as e:
+            logging.exception("Error requesting display on overlay: %s", e)
+
+    @pyqtSlot()
+    def handle_animation_finished(self, animation) -> None:
+        """
+        Handles the cleanup process when an animation finishes.
+
+        Args:
+            animation (Animation): The animation instance that has started.
+        """
+        try:
+            self.clean_up_animation(animation)
+            logging.debug("Handled animation finished: %s", animation)
+        except Exception as e:
+            logging.exception("Error in handle_animation_finished: %s", e)
+
+    def _create_base_animation_text(self, msg="Default Message") -> AnimationText:
         font_type = "Helvetica"
         font_size = 16
-        message = "Default Message"
+        message = msg
         icon_file = QPixmap("C:/intellij-projects/jetque/jetque/resources/test_animation_icon.jpg")
         color = QColor("white")
         outline_color = QColor("black")
@@ -107,249 +190,159 @@ class AnimationTester(JetQue):
 
     @staticmethod
     def _create_sound_effect() -> QSoundEffect:
-        # Just create a dummy sound effect (no actual sound)
         sound = QSoundEffect()
-        sound.setSource(QUrl())  # No actual sound file
+        sound.setSource(QUrl())  # Fake sound file
         return sound
 
-    def _get_starting_position(self) -> QPointF:
-        # For the anchor, the start circle is the "Incoming Anchor start position"
-        return self.overlay.anchor_points[0].start_circle.scenePos()
-
-    def _get_ending_position(self) -> QPointF:
-        # If the animation has an end position, use the Anchor end position
-        return self.overlay.anchor_points[0].end_circle.scenePos()
-
-    def _on_animation_finished(self, animation_ref):
-        anim = animation_ref()
-        if anim in self.active_animations:
-            self.active_animations.remove(anim)
-        # anim is scheduled to deleteLater, so after event loop returns control,
-        # it should be cleaned up.
-
     def run_directional_animation_test(self):
-        starting_pos = self._get_starting_position()
-        ending_pos = self._get_ending_position()
+        starting_pos = QPointF()
+        ending_pos = QPointF()
+        anim_text = self._create_base_animation_text()
 
-        def start_next_animation(count=1):
-            if count > 5:
-                return
+        anim = DirectionalAnimation(
+            animation_type="Directional",
+            sound=self._create_sound_effect(),
+            duration=1000,
+            starting_position=starting_pos,
+            fade_in=True,
+            fade_out=True,
+            fade_in_duration=250,
+            fade_out_duration=250,
+            fade_out_delay=250,
+            fade_in_easing_style=QEasingCurve.Type.OutQuad,
+            fade_out_easing_style=QEasingCurve.Type.InQuad,
+            animation_object=anim_text,
+            ending_position=ending_pos,
+            easing_style=QEasingCurve.Type.Linear,
+        )
 
-            anim_text = self._create_base_animation_text()
-            self.overlay.addItem(anim_text)
-
-            anim = DirectionalAnimation(
-                animation_type="Directional",
-                sound=self._create_sound_effect(),
-                duration=1000,
-                starting_position=starting_pos,
-                fade_in=True,
-                fade_out=True,
-                fade_in_duration=250,
-                fade_out_duration=250,
-                fade_out_delay=250,
-                fade_in_easing_style=QEasingCurve.Type.OutQuad,
-                fade_out_easing_style=QEasingCurve.Type.InQuad,
-                animation_object=anim_text,
-                ending_position=ending_pos,
-                easing_style=QEasingCurve.Type.Linear,
-            )
-
-            anim_ref = weakref.ref(anim)
-
-            def finished():
-                self._on_animation_finished(anim_ref)
-
-            anim.finished.connect(finished)
-            self.active_animations.append(anim)
-            anim.start()
-
-            QTimer.singleShot(250, lambda: start_next_animation(count + 1))
-
-        start_next_animation()
+        self.start_animation(anim)
 
     def run_parabola_animation_test(self):
-        starting_pos = self._get_starting_position()
-        ending_pos = self._get_ending_position()
+        starting_pos = QPointF()
+        ending_pos = QPointF()
         parabola_points = [
             AnimationPointF((starting_pos.x() + ending_pos.x()) / 2, starting_pos.y() - 100, 0.5),
         ]
+        anim_text = self._create_base_animation_text()
 
-        def start_next_animation(count=1):
-            if count > 5:
-                return
+        anim = ParabolaAnimation(
+            animation_type="Parabola",
+            sound=self._create_sound_effect(),
+            duration=1500,
+            starting_position=starting_pos,
+            fade_in=True,
+            fade_out=True,
+            fade_in_duration=250,
+            fade_out_duration=250,
+            fade_out_delay=250,
+            fade_in_easing_style=QEasingCurve.Type.Linear,
+            fade_out_easing_style=QEasingCurve.Type.Linear,
+            animation_object=anim_text,
+            ending_position=ending_pos,
+            easing_style=QEasingCurve.Type.Linear,
+            parabola_points=parabola_points
+        )
 
-            anim_text = self._create_base_animation_text()
-            self.overlay.addItem(anim_text)
-
-            anim = ParabolaAnimation(
-                animation_type="Parabola",
-                sound=self._create_sound_effect(),
-                duration=1500,
-                starting_position=starting_pos,
-                fade_in=True,
-                fade_out=True,
-                fade_in_duration=250,
-                fade_out_duration=250,
-                fade_out_delay=250,
-                fade_in_easing_style=QEasingCurve.Type.OutQuad,
-                fade_out_easing_style=QEasingCurve.Type.InQuad,
-                animation_object=anim_text,
-                ending_position=ending_pos,
-                easing_style=QEasingCurve.Type.InOutQuad,
-                parabola_points=parabola_points
-            )
-
-            anim_ref = weakref.ref(anim)
-
-            def finished():
-                self._on_animation_finished(anim_ref)
-
-            anim.finished.connect(finished)
-            self.active_animations.append(anim)
-            anim.start()
-
-            QTimer.singleShot(250, lambda: start_next_animation(count + 1))
-
-        start_next_animation()
+        self.start_animation(anim)
 
     def run_swivel_animation_test(self):
-        starting_pos = QPointF(1280.0, 700.0)  # Manual start pos
-        swivel_pos = QPointF(1920.0, 350.0)  # Manual swivel pos
-        ending_pos = QPointF(2560.0, 350.0)  # Manual ending pos
+        starting_pos = QPointF(1280.0, 700.0)
+        swivel_pos = QPointF(1920.0, 350.0)
+        ending_pos = QPointF(2560.0, 350.0)
         duration = 10000
         fade_in_duration = int(duration * 0.1)
         fade_out_duration = int(duration * 0.1)
         fade_out_delay = int(duration - fade_out_duration)
         phase_1_duration = int(duration / 2)
         phase_2_duration = int(duration / 2)
-        playback_speed = int(duration * 0.23)
+        fade_in_on = True
+        fade_out_on = True
+        anim_text = self._create_base_animation_text("Swivel")
 
-        def start_next_animation(count=1):
-            if count > 5:
-                QTimer.singleShot(duration + 3000, self.quit)
-                return
+        anim = SwivelAnimation(
+            animation_type="Swivel",
+            sound=self._create_sound_effect(),
+            duration=duration,
+            starting_position=starting_pos,
+            fade_in=fade_in_on,
+            fade_out=fade_out_on,
+            fade_in_duration=fade_in_duration,
+            fade_out_duration=fade_out_duration,
+            fade_out_delay=fade_out_delay,
+            fade_in_easing_style=QEasingCurve.Type.Linear,
+            fade_out_easing_style=QEasingCurve.Type.Linear,
+            animation_object=anim_text,
+            ending_position=ending_pos,
+            easing_style=QEasingCurve.Type.InQuad,
+            phase_1_duration=phase_1_duration,
+            phase_2_duration=phase_2_duration,
+            swivel_position=swivel_pos,
+        )
 
-            anim_text = self._create_base_animation_text()
-            self.overlay.addItem(anim_text)
-
-            anim = SwivelAnimation(
-                animation_type="Swivel",
-                sound=self._create_sound_effect(),
-                duration=duration,
-                starting_position=starting_pos,
-                fade_in=True,
-                fade_out=True,
-                fade_in_duration=fade_in_duration,
-                fade_out_duration=fade_out_duration,
-                fade_out_delay=fade_out_delay,
-                fade_in_easing_style=QEasingCurve.Type.Linear,
-                fade_out_easing_style=QEasingCurve.Type.Linear,
-                animation_object=anim_text,
-                ending_position=ending_pos,
-                easing_style=QEasingCurve.Type.InQuad,
-                phase_1_duration=phase_1_duration,
-                phase_2_duration=phase_2_duration,
-                swivel_position=swivel_pos,
-            )
-
-            anim_ref = weakref.ref(anim)
-
-            def finished():
-                self._on_animation_finished(anim_ref)
-
-            anim.finished.connect(finished)
-            self.active_animations.append(anim)
-            anim.start()
-
-            QTimer.singleShot(playback_speed, lambda: start_next_animation(count + 1))
-
-        start_next_animation()
+        self.start_animation(anim)
 
     def run_pow_animation_test(self):
-        starting_pos = self._get_starting_position()
+        starting_pos = QPointF(1280.0, 350.0)  # Manual start pos
+        duration = 5000
+        fade_in_duration = int(duration * 0.1)
+        fade_out_duration = int(duration * 0.1)
+        fade_out_delay = int(duration - fade_out_duration)
+        phase_1_duration = int(duration * 0.05)
+        phase_2_duration = int(duration * 0.95)
+        jiggle_intensity = 25
+        scale_increase_percentage = 2.75
+        jiggle_on = True
+        fade_in_on = True
+        fade_out_on = True
 
-        def start_next_animation(count=1):
-            if count > 5:
-                return
+        anim_text = self._create_base_animation_text("Pow")
 
-            anim_text = self._create_base_animation_text()
-            self.overlay.addItem(anim_text)
+        anim = PowAnimation(
+            animation_type="Pow",
+            sound=self._create_sound_effect(),
+            duration=duration,
+            starting_position=starting_pos,
+            fade_in=fade_in_on,
+            fade_out=fade_out_on,
+            fade_in_duration=fade_in_duration,
+            fade_out_duration=fade_out_duration,
+            fade_out_delay=fade_out_delay,
+            fade_in_easing_style=QEasingCurve.Type.Linear,
+            fade_out_easing_style=QEasingCurve.Type.Linear,
+            animation_object=anim_text,
+            jiggle=jiggle_on,
+            jiggle_intensity=jiggle_intensity,
+            scale_percentage=scale_increase_percentage,
+            scale_easing_style=QEasingCurve.Type.OutInQuad,
+            phase_1_duration=phase_1_duration,
+            phase_2_duration=phase_2_duration
+        )
 
-            anim = PowAnimation(
-                animation_type="Pow",
-                sound=self._create_sound_effect(),
-                duration=1000,
-                starting_position=starting_pos,
-                fade_in=True,
-                fade_out=True,
-                fade_in_duration=250,
-                fade_out_duration=250,
-                fade_out_delay=250,
-                fade_in_easing_style=QEasingCurve.Type.OutQuad,
-                fade_out_easing_style=QEasingCurve.Type.InQuad,
-                animation_object=anim_text,
-                jiggle=False,
-                jiggle_intensity=100,
-                scale_percentage=1.5,
-                scale_easing_style=QEasingCurve.Type.OutBounce,
-                phase_1_duration=500,
-                phase_2_duration=500
-            )
-
-            anim_ref = weakref.ref(anim)
-
-            def finished():
-                self._on_animation_finished(anim_ref)
-
-            anim.finished.connect(finished)
-            self.active_animations.append(anim)
-            anim.start()
-
-            QTimer.singleShot(250, lambda: start_next_animation(count + 1))
-
-        start_next_animation()
+        self.start_animation(anim)
 
     def run_stationary_animation_test(self):
-        starting_pos = self._get_starting_position()
+        starting_pos = QPointF()
+        anim_text = self._create_base_animation_text()
 
-        def start_next_animation(count=1):
-            if count > 5:
-                return
+        anim = StationaryAnimation(
+            animation_type="Stationary",
+            sound=self._create_sound_effect(),
+            duration=1000,
+            starting_position=starting_pos,
+            fade_in=True,
+            fade_out=True,
+            fade_in_duration=250,
+            fade_out_duration=250,
+            fade_out_delay=250,
+            fade_in_easing_style=QEasingCurve.Type.OutQuad,
+            fade_out_easing_style=QEasingCurve.Type.InQuad,
+            animation_object=anim_text,
+            jiggle=True,
+            jiggle_intensity=100
+        )
 
-            anim_text = self._create_base_animation_text()
-            self.overlay.addItem(anim_text)
-
-            anim = StationaryAnimation(
-                animation_type="Stationary",
-                sound=self._create_sound_effect(),
-                duration=1000,
-                starting_position=starting_pos,
-                fade_in=True,
-                fade_out=True,
-                fade_in_duration=250,
-                fade_out_duration=250,
-                fade_out_delay=250,
-                fade_in_easing_style=QEasingCurve.Type.OutQuad,
-                fade_out_easing_style=QEasingCurve.Type.InQuad,
-                animation_object=anim_text,
-                jiggle=True,
-                jiggle_intensity=100
-            )
-
-            anim_ref = weakref.ref(anim)
-
-            def finished():
-                self._on_animation_finished(anim_ref)
-
-            anim.finished.connect(finished)
-            self.active_animations.append(anim)
-            anim.start()
-
-            QTimer.singleShot(250, lambda: start_next_animation(count + 1))
-
-        start_next_animation()
-
+        self.start_animation(anim)
 
 if __name__ == "__main__":
     logging.basicConfig(
@@ -361,14 +354,4 @@ if __name__ == "__main__":
     )
 
     app = AnimationTester(sys.argv)
-    # Instead of calling app.run_swivel_animation_test() directly, we start the event loop
-    # and then trigger the test after a short delay, ensuring the main window and overlay are ready.
-
-    # Uncomment the test you want to run:
-    # QTimer.singleShot(0, app.run_directional_animation_test)
-    # QTimer.singleShot(0, app.run_parabola_animation_test)
-    QTimer.singleShot(0, app.run_swivel_animation_test)
-    # QTimer.singleShot(0, app.run_pow_animation_test)
-    # QTimer.singleShot(0, app.run_stationary_animation_test)
-
-    app.run()  # Starts the event loop
+    app.run()

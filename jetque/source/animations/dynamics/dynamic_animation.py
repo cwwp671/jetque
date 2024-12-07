@@ -1,4 +1,5 @@
 # src/animations/dynamic_animation.py
+import logging
 
 from PyQt6.QtCore import QEasingCurve, QPointF
 from PyQt6.QtMultimedia import QSoundEffect
