@@ -63,9 +63,6 @@ class Animation(QParallelAnimationGroup):
         self.fade_out_duration: int = fade_out_duration
         self.fade_out_delay: int = fade_out_delay
         self.fade_out_easing_style: QEasingCurve.Type = fade_out_easing_style
-        self.animation_object.setTransformOriginPoint(
-            self.animation_object.boundingRect().width() / 2.0,
-            self.animation_object.boundingRect().height() / 2.0)
         self.animation: QPropertyAnimation = QPropertyAnimation(self.animation_object, b"pos")
         self.animation.setDuration(self.duration)
         self.animation.setStartValue(self.starting_position)
@@ -92,10 +89,7 @@ class Animation(QParallelAnimationGroup):
             self.fade_out_group.addAnimation(self.fade_out_animation)
             self.addAnimation(self.fade_out_group)
 
-        # Connecting finished signal to help handle cleanup / deletion to avoid memory leaks
-        self.finished.connect(self._on_finished)
-
-    def start(self, policy=QAbstractAnimation.DeletionPolicy.DeleteWhenStopped) -> None:
+    def start(self, policy=QAbstractAnimation.DeletionPolicy.KeepWhenStopped) -> None:
         """
         Start the animation.
 
@@ -107,22 +101,6 @@ class Animation(QParallelAnimationGroup):
             self._play_sound()
         except Exception as e:
             logging.exception("Failed to start Animation: %s", e)
-
-    def _on_finished(self):
-        """
-        Slot called when the animation finishes.
-        """
-        try:
-            if self.animation_object:
-                scene = self.animation_object.scene()
-
-                if scene:
-                    scene.removeItem(self.animation_object)
-
-                logging.debug("Deleting Animation Object: %s", self.animation_object)
-                self.animation_object.deleteLater()
-        except Exception as e:
-            logging.exception("Failed to delete Animation Object: %s", e)
 
     def _play_sound(self) -> None:
         """

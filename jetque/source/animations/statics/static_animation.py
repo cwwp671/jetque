@@ -1,6 +1,7 @@
 # src/animations/static_animation.py
 
 import logging
+import math
 import random
 
 from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation, QAbstractAnimation, QTimer
@@ -90,23 +91,10 @@ class StaticAnimation(Animation):
             self.jiggle_animation: QPropertyAnimation = QPropertyAnimation(self.animation_object, b"pos")
             self.jiggle_animation.currentLoopChanged.connect(self._apply_jiggle)
             self.jiggle_animation.setDuration(self.jiggle_intensity)
-            self.jiggle_animation.setLoopCount(INFINITE_LOOP)
+            self.jiggle_animation.setLoopCount(math.floor(self.duration / self.jiggle_intensity))
             self.jiggle_animation.setStartValue(self.starting_position)
             self.jiggle_animation.setEndValue(self.starting_position)
             self.addAnimation(self.jiggle_animation)
-
-    def start(self, policy=QAbstractAnimation.DeletionPolicy.DeleteWhenStopped) -> None:
-        """
-        Start the animation.
-
-        :param policy: Deletion policy for the animation.
-                       Tell the animation to delete if it is stopped manually with DeleteWhenStopped.
-        """
-        try:
-            super().start(policy)
-            QTimer.singleShot(self.duration, self.stop)
-        except Exception as e:
-            logging.exception("Failed to start StaticAnimation: %s", e)
 
     def _apply_jiggle(self) -> None:
         """

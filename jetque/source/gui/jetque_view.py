@@ -42,7 +42,7 @@ class JetQueView(QGraphicsView):
             parent (Optional[QWidget], optional): The parent widget. Defaults to None.
         """
         super().__init__(scene, parent)
-        logging.debug("Initializing.")
+        # logging.debug("Initializing.")
 
         self.setWindowFlags(
             Qt.WindowType.Tool
@@ -94,7 +94,7 @@ class JetQueView(QGraphicsView):
     def configuration_mode(self) -> None:
         """Switch the view to configuration mode, enabling user interaction within a mask."""
         try:
-            logging.debug("View switching to configuration mode.")
+            # logging.debug("View switching to configuration mode.")
 
             # Remove Qt.WindowTransparentForInput to make the window receive input events
             self.setWindowFlags(
@@ -114,8 +114,8 @@ class JetQueView(QGraphicsView):
                 if self.testAttribute(attribute):
                     enabled_attributes.append(attribute)
 
-            for attr in enabled_attributes:
-                logging.debug(f"Widget Attribute {attr} is Enabled.")
+            # for attr in enabled_attributes:
+                # logging.debug(f"Widget Attribute {attr} is Enabled.")
 
         except Exception as e:
             logging.exception(f"Failed to switch to configuration mode with exception: {e}")
@@ -123,7 +123,7 @@ class JetQueView(QGraphicsView):
     def run_mode(self) -> None:
         """Switch the view to run mode, disabling user interaction."""
         try:
-            logging.debug("Switching to active mode.")
+            # logging.debug("Switching to active mode.")
 
             self.setWindowFlags(
                 Qt.WindowType.Tool
@@ -144,8 +144,8 @@ class JetQueView(QGraphicsView):
                 if self.testAttribute(attribute):
                     enabled_attributes.append(attribute)
 
-            for attr in enabled_attributes:
-                logging.debug(f"Widget Attribute {attr} is Enabled.")
+            # for attr in enabled_attributes:
+                # logging.debug(f"Widget Attribute {attr} is Enabled.")
 
         except Exception as e:
             logging.exception(f"Failed to switch to active mode with exception: {e}")

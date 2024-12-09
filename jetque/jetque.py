@@ -35,7 +35,7 @@ class JetQue(QApplication):
         self.key_listener_thread: GlobalKeyListenerThread = GlobalKeyListenerThread()
         self.key_listener_thread.key_pressed.connect(self.handle_global_key_press)
         self.key_listener_thread.start()
-        logging.debug("GlobalKeyListenerThread started.")
+        # logging.debug("GlobalKeyListenerThread started.")
 
     def handle_global_key_press(self, key: str, modifiers) -> None:
         """Handle global key press events.

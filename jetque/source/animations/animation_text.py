@@ -35,7 +35,7 @@ class AnimationText(QGraphicsTextItem):
             icon: bool = False,
             icon_pixmap: QPixmap = None,
             icon_alignment: str = "left",  # String instead of bool incase more options are created
-            icon_padding: float = 0.0,
+            icon_padding: float = 2.0,
             parent=None
     ) -> None:
         """
@@ -71,6 +71,7 @@ class AnimationText(QGraphicsTextItem):
             self.outline_path: QPainterPath = QPainterPath()
             self.text_drop_shadow_effect = QGraphicsDropShadowEffect(self)
             self.animation_icon: QGraphicsPixmapItem = QGraphicsPixmapItem(self)
+            self.bounding_rect: QRectF = QRectF()
 
             # Applies a drop shadow effect to the text item.
             if self.drop_shadow:
@@ -101,43 +102,49 @@ class AnimationText(QGraphicsTextItem):
                     self.toPlainText()
                 )
 
-            # Applies an icon to the text
+            self.setTransformOriginPoint(
+                super().boundingRect().width() / 2.0,
+                super().boundingRect().height() / 2.0)
+
             if self.icon:
+
+                # Calculate scale factor based on font metrics
+                target_size = int(self.font_metrics_f.height())
+                icon_pixmap = icon_pixmap.scaled(target_size, target_size)
+
                 self.animation_icon.setPixmap(icon_pixmap)
-                pixmap_width_f: float = self.animation_icon.pixmap().size().toSizeF().width()
-                pixmap_height_f: float = self.animation_icon.pixmap().size().toSizeF().height()
-                scale_factor: float = ((self.font_metrics_f.ascent() + self.font_metrics_f.descent())
-                                       / max(pixmap_width_f, pixmap_height_f))
+                self.animation_icon.transformOriginPoint()
+                self.animation_icon.setTransformOriginPoint(
+                    self.animation_icon.boundingRect().width() / 2.0,
+                    self.animation_icon.boundingRect().height() / 2.0
+                )
 
-                self.animation_icon.setScale(scale_factor)
-                pixmap_scaled_width_f: float = pixmap_width_f * scale_factor
-
+                # Position based on alignment
                 if self.icon_alignment.lower() == "left":
-                    self.animation_icon.setPos(-pixmap_scaled_width_f, 0.0)
+                    self.animation_icon.setPos(-(icon_pixmap.width()) + self.outline_pen.widthF(),
+                                               self.text_drop_shadow_effect.yOffset() + (self.outline_pen.widthF() / 2.0))
                 elif self.icon_alignment.lower() == "right":
-                    self.animation_icon.setPos(pixmap_scaled_width_f, 0.0)
+                    self.animation_icon.setPos(self.font_metrics_f.horizontalAdvance(self.toPlainText()) + (self.outline_pen.widthF() * 2),
+                                               self.text_drop_shadow_effect.yOffset() + (self.outline_pen.widthF() / 2.0))
 
-            logging.debug("AnimationText initialized with text: '%s'", self.toPlainText())
-
+            self.calculate_bounding_rect()
         except Exception as e:
             logging.exception("Failed to initialize AnimationText: %s", e)
 
-    def boundingRect(self) -> QRectF:
+    def calculate_bounding_rect(self) -> None:
 
-        bounding_rect: QRectF = super().boundingRect()
+        self.bounding_rect = super().boundingRect()
 
         if self.outline:
-            bounding_rect.adjust(
-                -self.outline_pen.widthF(),
-                -self.outline_pen.widthF(),
-                self.outline_pen.widthF(),
-                self.outline_pen.widthF()
-            )
+            self.bounding_rect = self.bounding_rect.united(self.outline_path.boundingRect())
 
-        if self.icon:
-            bounding_rect = bounding_rect.united(self.animation_icon.boundingRect())
+        self.bounding_rect = self.bounding_rect.united(self.childrenBoundingRect())
 
-        return bounding_rect
+        if self.drop_shadow:
+            self.bounding_rect = self.graphicsEffect().boundingRectFor(self.bounding_rect)
+
+    def boundingRect(self) -> QRectF:
+        return self.bounding_rect
 
     def paint(
             self,

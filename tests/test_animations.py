@@ -2,7 +2,7 @@ import sys
 import logging
 from typing import List
 
-from PyQt6.QtCore import QTimer, QEasingCurve, QPointF, QUrl, Qt, pyqtSlot
+from PyQt6.QtCore import QTimer, QEasingCurve, QPointF, QUrl, Qt, pyqtSlot, QAbstractAnimation
 from PyQt6.QtGui import QFont, QPen, QColor, QPixmap
 from PyQt6.QtMultimedia import QSoundEffect
 
@@ -28,7 +28,7 @@ class AnimationTester(JetQue):
         self.pow_timer.start(5250)
         self.swivel_timer = QTimer(self)
         self.swivel_timer.timeout.connect(self.run_swivel_animation_test)
-        self.swivel_timer.start(2750)
+        self.swivel_timer.start(500)
 
     def start_animation(self, animation) -> None:
         """
@@ -38,95 +38,56 @@ class AnimationTester(JetQue):
             animation (Animation): The animation instance to start.
         """
         try:
-            animation.finished.connect(lambda: self.handle_animation_finished(animation))
-            if animation:
+            if animation and animation.animation_object:
+
+                def animation_cleanup():
+                    self.animation_cleanup(animation, animation.animation_object)
+
+                animation.finished.connect(animation_cleanup)
                 self.active_animations.append(animation)
-                self.request_display(animation.animation_object)
-                animation.start()
-                logging.info("Animation started: %s", animation)
-            else:
-                logging.warning("Attempted to start invalid animation type: %s", type(animation))
+                self.overlay.addItem(animation.animation_object)
+                animation.start(QAbstractAnimation.DeletionPolicy.DeleteWhenStopped)
+                # logging.debug("Animation started: %s", animation)
         except Exception as e:
-            logging.exception("Error in start_animation: %s", e)
-
-    def stop_animation(self, animation) -> None:
-        """
-        Stops the given animation and removes it from the active animations list.
-
-        Args:
-            animation (Animation): The animation instance to stop.
-        """
-        try:
-            animation.stop()
-
-            if animation:
-                self.clean_up_animation(animation)
-
-            logging.info("Animation stopped: %s", animation)
-        except Exception as e:
-            logging.exception("Error in stop_animation: %s", e)
-
-    def clean_up_animation(self, animation) -> None:
-        """
-        Cleans up the animation by removing it from active lists and deleting it safely.
-
-        Args:
-            animation (Animation): The animation instance to clean up.
-        """
-        try:
-            removed = False
-            if animation:
-                if animation in self.active_animations:
-                    self.active_animations.remove(animation)
-                    removed = True
-
-                if removed:
-                    animation.deleteLater()
-                    logging.debug("Animation cleaned up and deleted: %s", animation)
-                else:
-                    logging.warning("Attempted to clean up animation not found in active lists: %s", animation)
-        except Exception as e:
-            logging.exception("Error in clean_up_animation: %s", e)
-
-    def request_display(self, animation_object) -> None:
-        """
-        Sends a request to the Overlay to display the animation.
-
-        Args:
-            animation_object (AnimationText): The animation instance's animation_object to be displayed.
-        """
-        try:
-            if animation_object:
-                self.overlay.addItem(animation_object)
-                logging.debug("Animation Item added to scene: %s", animation_object)
-            else:
-                logging.warning("Attempted to add Animation Item to scene: %s", animation_object)
-        except Exception as e:
-            logging.exception("Error requesting display on overlay: %s", e)
+            logging.exception("Exception in start_animation: %s", e)
 
     @pyqtSlot()
-    def handle_animation_finished(self, animation) -> None:
+    def animation_cleanup(self, animation, animation_object) -> None:
         """
         Handles the cleanup process when an animation finishes.
 
         Args:
             animation (Animation): The animation instance that has started.
+            animation_object (AnimationText): The object being animated.
         """
         try:
-            self.clean_up_animation(animation)
-            logging.debug("Handled animation finished: %s", animation)
+            if animation and animation_object and animation in self.active_animations:
+                # logging.debug(f"Starting animation_cleanup on animation: {animation} "
+                #               f"and animation_object: {animation_object}")
+                # logging.debug("Removing animation from active_animations list")
+                self.active_animations.remove(animation)
+                # logging.debug("Disconnecting animation finished signal")
+                animation.finished.disconnect()
+                # logging.debug("Queuing deletion on animation_object")
+                animation_object.deleteLater()
+
+                # We are using a DeletionPolicy when starting our animation, so this is for reference only
+                # logging.debug("Queuing deletion on animation")
+                # animation.deleteLater()
+
+                # logging.debug("Finished animation_cleanup")
         except Exception as e:
-            logging.exception("Error in handle_animation_finished: %s", e)
+            logging.exception("Exception in animation_cleanup: %s", e)
 
     def _create_base_animation_text(self, msg="Default Message") -> AnimationText:
         font_type = "Helvetica"
-        font_size = 16
+        font_size = 36
         message = msg
-        icon_file = QPixmap("C:/intellij-projects/jetque/jetque/resources/test_animation_icon.jpg")
+        icon_file = QPixmap("C:/intellij-projects/jetque/jetque/resources/test_animation_icon.png")
         color = QColor("white")
         outline_color = QColor("black")
         drop_shadow_color = QColor(0, 0, 0, 191)
-        icon_alignment = "left"
+        icon_alignment = "right"
         icon_on = True
         outline_on = True
         drop_shadow_on = True
@@ -250,7 +211,7 @@ class AnimationTester(JetQue):
         starting_pos = QPointF(1280.0, 700.0)
         swivel_pos = QPointF(1920.0, 350.0)
         ending_pos = QPointF(2560.0, 350.0)
-        duration = 10000
+        duration = 3000
         fade_in_duration = int(duration * 0.1)
         fade_out_duration = int(duration * 0.1)
         fade_out_delay = int(duration - fade_out_duration)
