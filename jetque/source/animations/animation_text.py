@@ -35,7 +35,7 @@ class AnimationText(QGraphicsTextItem):
             icon: bool = False,
             icon_pixmap: QPixmap = None,
             icon_alignment: str = "left",  # String instead of bool incase more options are created
-            icon_padding: float = 2.0,
+            icon_padding: float = 0.0,
             parent=None
     ) -> None:
         """
@@ -114,18 +114,42 @@ class AnimationText(QGraphicsTextItem):
 
                 self.animation_icon.setPixmap(icon_pixmap)
                 self.animation_icon.transformOriginPoint()
-                self.animation_icon.setTransformOriginPoint(
-                    self.animation_icon.boundingRect().width() / 2.0,
-                    self.animation_icon.boundingRect().height() / 2.0
-                )
+                #self.animation_icon.setTransformOriginPoint(
+                #    self.animation_icon.boundingRect().width() / 2.0,
+                #    self.animation_icon.boundingRect().height() / 2.0
+                #)
 
-                # Position based on alignment
+                additional_x_offset: float = 0.0
+                additional_y_offset: float = 0.0
+                x_position: float = 0.0
+                y_position: float = 0.0
+
+                if self.drop_shadow:
+                    additional_x_offset += self.text_drop_shadow_effect.xOffset()
+                    additional_y_offset += self.text_drop_shadow_effect.yOffset()
+                    additional_y_offset += self.text_drop_shadow_effect.blurRadius() / 2.0
+
+                if self.outline:
+                    additional_x_offset += self.outline_pen.widthF()
+                    additional_y_offset += self.outline_pen.widthF()
+
+                additional_x_offset += self.icon_padding
+
                 if self.icon_alignment.lower() == "left":
-                    self.animation_icon.setPos(-(icon_pixmap.width()) + self.outline_pen.widthF(),
-                                               self.text_drop_shadow_effect.yOffset() + (self.outline_pen.widthF() / 2.0))
+                    x_position = -icon_pixmap.width() - additional_x_offset
                 elif self.icon_alignment.lower() == "right":
-                    self.animation_icon.setPos(self.font_metrics_f.horizontalAdvance(self.toPlainText()) + (self.outline_pen.widthF() * 2),
-                                               self.text_drop_shadow_effect.yOffset() + (self.outline_pen.widthF() / 2.0))
+                    x_position = self.font_metrics_f.horizontalAdvance(self.toPlainText()) + additional_x_offset
+
+                y_position = self.text_drop_shadow_effect.yOffset() + (self.outline_pen.widthF() / 2.0)
+
+                self.animation_icon.setPos(x_position, y_position)
+                # Position based on alignment
+                #if self.icon_alignment.lower() == "left":
+                #    self.animation_icon.setPos(-(icon_pixmap.width()) + self.outline_pen.widthF(),
+                #                               self.text_drop_shadow_effect.yOffset() + (self.outline_pen.widthF() / 2.0))
+                #elif self.icon_alignment.lower() == "right":
+                #    self.animation_icon.setPos(self.font_metrics_f.horizontalAdvance(self.toPlainText()) + (self.outline_pen.widthF() * 2),
+                #                               self.text_drop_shadow_effect.yOffset() + (self.outline_pen.widthF() / 2.0))
 
             self.calculate_bounding_rect()
         except Exception as e:
