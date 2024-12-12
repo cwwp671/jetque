@@ -1,9 +1,9 @@
 # src/animations/dynamics/swivel_animation.py
+from typing import Optional
 
-from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation, QSequentialAnimationGroup
+from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation, QSequentialAnimationGroup, QObject
 from PyQt6.QtMultimedia import QSoundEffect
 
-from jetque.source.animations.animation_text import AnimationText
 from jetque.source.animations.dynamics.dynamic_animation import DynamicAnimation
 
 
@@ -26,7 +26,7 @@ class SwivelAnimation(DynamicAnimation):
             fade_out_delay: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
-            animation_object: AnimationText,
+            animation_object: Optional[QObject],
             ending_position: QPointF,
             easing_style: QEasingCurve.Type,
             phase_1_duration: int,
@@ -49,7 +49,7 @@ class SwivelAnimation(DynamicAnimation):
             fade_out_delay (int): The fade-out delay in milliseconds.
             fade_in_easing_style (QEasingCurve.Type): The easing curve for fade-in.
             fade_out_easing_style (QEasingCurve.Type): The easing curve for fade-out.
-            animation_object (AnimationText): The object associated with the animation.
+            animation_object (Optional[QObject]): The object associated with the animation.
             ending_position (QPointF): The ending position of the animation.
             easing_style (QEasingCurve.Type): The easing curve type for the animation.
             phase_1_duration (int): The duration of phase 1
@@ -76,21 +76,24 @@ class SwivelAnimation(DynamicAnimation):
         )
 
         # Initialize SwivelAnimation specific attributes
+
+
         # Phase 1
-        self.removeAnimation(self.animation)  # Removes Phase 1 from Parallel Group
-        self.phase_1_duration: int = phase_1_duration
+        # self.removeAnimation(self.animation)  # Removes Phase 1 from Parallel Group
+        # self.phase_1_duration: int = phase_1_duration
         self.swivel_position: QPointF = swivel_position
-        self.animation.setDuration(self.phase_1_duration)
-        self.animation.setEndValue(self.swivel_position)
+        self.animation.setKeyValueAt(0.5, self.swivel_position)
+        # self.animation.setDuration(self.phase_1_duration)
+        # self.animation.setEndValue(self.swivel_position)
         # Phase 2
-        self.phase_2_duration: int = phase_2_duration
-        self.animation2 = QPropertyAnimation(self.animation_object, b"pos")
-        self.animation2.setDuration(self.phase_2_duration)
-        self.animation2.setStartValue(self.swivel_position)
-        self.animation2.setEndValue(self.ending_position)
-        self.animation2.setEasingCurve(self.easing_style)
+        # self.phase_2_duration: int = phase_2_duration
+        # self.animation2 = QPropertyAnimation(self.animation_object, b"pos")
+        # self.animation2.setDuration(self.phase_2_duration)
+        # self.animation2.setStartValue(self.swivel_position)
+        # self.animation2.setEndValue(self.ending_position)
+        # self.animation2.setEasingCurve(self.easing_style)
         # Phase Sequence
-        self.animation_sequence: QSequentialAnimationGroup = QSequentialAnimationGroup()
-        self.animation_sequence.addAnimation(self.animation)
-        self.animation_sequence.addAnimation(self.animation2)
-        self.addAnimation(self.animation_sequence)  # Adds the Sequence to the Parallel Group
+        # self.animation_sequence: QSequentialAnimationGroup = QSequentialAnimationGroup()
+        # self.animation_sequence.addAnimation(self.animation)
+        # self.animation_sequence.addAnimation(self.animation2)
+        # self.addAnimation(self.animation_sequence)  # Adds the Sequence to the Parallel Group

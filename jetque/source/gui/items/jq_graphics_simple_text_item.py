@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from PyQt6.QtCore import QPointF, Qt, QRectF
+from PyQt6.QtCore import QPointF, Qt, QRectF, QObject
 from PyQt6.QtGui import QColor, QFont, QPen
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QGraphicsSimpleTextItem, QGraphicsItem
 
@@ -107,7 +107,8 @@ class JQGraphicsSimpleTextItem(QGraphicsSimpleTextItem):
                 # Adjust bounding rect to accommodate the outline width
                 extra: float = self.outline_pen.widthF() / 2.0
                 temporary_rect = temporary_rect.adjusted(-extra, -extra, extra, extra)
-                self.collision_rect = temporary_rect
+
+            self.collision_rect = temporary_rect
 
             if self.drop_shadow:
                 # Adjust bounding rect to accommodate the drop shadow offset

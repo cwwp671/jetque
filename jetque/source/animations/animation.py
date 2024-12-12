@@ -1,13 +1,14 @@
 # src/animations/animation.py
 
 import logging
+from typing import Optional
 
 from PyQt6.QtCore import (
-    QEasingCurve, QPointF, QPropertyAnimation, QSequentialAnimationGroup, QParallelAnimationGroup, QAbstractAnimation
+    QEasingCurve, QPointF, QPropertyAnimation, QSequentialAnimationGroup, QParallelAnimationGroup, QAbstractAnimation,
+    QObject
 )
 
 from PyQt6.QtMultimedia import QSoundEffect
-from jetque.source.animations.animation_text import AnimationText
 
 
 class Animation(QParallelAnimationGroup):
@@ -28,7 +29,7 @@ class Animation(QParallelAnimationGroup):
             fade_out_delay: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
-            animation_object: AnimationText,
+            animation_object: Optional[QObject],
             parent=None
     ) -> None:
         """
@@ -46,14 +47,14 @@ class Animation(QParallelAnimationGroup):
             fade_out_delay (int): The fade-out delay in milliseconds.
             fade_in_easing_style (QEasingCurve.Type): The easing curve for fade-in.
             fade_out_easing_style (QEasingCurve.Type): The easing curve for fade-out.
-            animation_object (AnimationText): The object associated with the animation.
+            animation_object (Optional[QObject]): The object associated with the animation.
             parent: The parent object.
         """
         super().__init__(parent)
         # Initialize common attributes between all Animation children
         self.type: str = animation_type
         self.sound: QSoundEffect = sound
-        self.animation_object: AnimationText = animation_object
+        self.animation_object: Optional[QObject] = animation_object
         self.duration: int = duration
         self.starting_position: QPointF = starting_position
         self.fade_in: bool = fade_in

@@ -1,9 +1,9 @@
 # src/animations/statics/stationary_animation.py
+from typing import Optional
 
-from PyQt6.QtCore import QEasingCurve, QPointF
+from PyQt6.QtCore import QEasingCurve, QPointF, QObject
 from PyQt6.QtMultimedia import QSoundEffect
 
-from jetque.source.animations.animation_text import AnimationText
 from jetque.source.animations.statics.static_animation import StaticAnimation
 
 
@@ -25,7 +25,7 @@ class StationaryAnimation(StaticAnimation):
             fade_out_delay: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
-            animation_object: AnimationText,
+            animation_object: Optional[QObject],
             jiggle: bool,
             jiggle_intensity: int,
             parent=None
@@ -45,7 +45,7 @@ class StationaryAnimation(StaticAnimation):
             fade_out_delay (int): The fade-out delay in milliseconds.
             fade_in_easing_style (QEasingCurve.Type): The easing curve for fade-in.
             fade_out_easing_style (QEasingCurve.Type): The easing curve for fade-out.
-            animation_object (AnimationText): The object associated with the animation.
+            animation_object (Optional[QObject]): The object associated with the animation.
             jiggle (bool): Whether the jiggle effect is enabled.
             jiggle_intensity (int): The intensity of the jiggle effect in milliseconds.
             parent: The parent object.

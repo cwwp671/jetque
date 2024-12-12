@@ -3,16 +3,15 @@
 import logging
 import math
 import random
+from typing import Optional
 
-from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation, QAbstractAnimation, QTimer
+from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation, QObject
 from PyQt6.QtMultimedia import QSoundEffect
 
 from jetque.source.animations.animation import Animation
-from jetque.source.animations.animation_text import AnimationText
 
 # Constants
-JIGGLE_AMOUNT = 1.0
-INFINITE_LOOP = -1
+JIGGLE_AMOUNT = 2.0
 
 
 class StaticAnimation(Animation):
@@ -38,7 +37,7 @@ class StaticAnimation(Animation):
             fade_out_delay: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
-            animation_object: AnimationText,
+            animation_object: Optional[QObject],
             jiggle: bool,
             jiggle_intensity: int,
             parent=None
@@ -58,7 +57,7 @@ class StaticAnimation(Animation):
             fade_out_delay (int): The fade-out delay in milliseconds.
             fade_in_easing_style (QEasingCurve.Type): The easing curve for fade-in.
             fade_out_easing_style (QEasingCurve.Type): The easing curve for fade-out.
-            animation_object (AnimationText): The object associated with the animation.
+            animation_object (Optional[QObject]): The object associated with the animation.
             jiggle (bool): Whether the jiggle effect is enabled.
             jiggle_intensity (int): The intensity of the jiggle effect in milliseconds.
             parent: The parent object.

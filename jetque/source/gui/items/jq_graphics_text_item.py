@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from PyQt6.QtCore import QPointF, Qt, QRectF
+from PyQt6.QtCore import QPointF, Qt, QRectF, QObject
 from PyQt6.QtGui import QColor, QFont, QPen, QTextCursor, QTextCharFormat
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QGraphicsTextItem, QGraphicsItem
 
@@ -21,7 +21,7 @@ class JQGraphicsTextItem(QGraphicsTextItem):
 
     def __init__(
             self,
-            font: QFont = QFont("Helvetica"),
+            font: Optional[QFont] = QFont("Helvetica"),
             text: str = "No Message Set",
             color: QColor = QColor(Qt.GlobalColor.white),
             outline: bool = True,
@@ -30,7 +30,8 @@ class JQGraphicsTextItem(QGraphicsTextItem):
             drop_shadow_offset: QPointF = QPointF(3.5, 6.1),
             drop_shadow_blur_radius: float = 7.0,
             drop_shadow_color: QColor = QColor(0, 0, 0, 191),
-            parent: Optional[QGraphicsItem] = None
+            parent_object: Optional[QObject] = None,
+            parent_item: Optional[QGraphicsItem] = None
     ) -> None:
         """
         Initialize the JQGraphicsTextItem with specified properties.
@@ -47,9 +48,10 @@ class JQGraphicsTextItem(QGraphicsTextItem):
             drop_shadow_color (QColor, optional): Color of the drop shadow.
             parent (Optional[QGraphicsItem], optional): Parent QGraphicsItem.
         """
-        super().__init__(parent)
+        super().__init__(parent_item)
 
         try:
+            self.setParent(parent_object)
             self.setAcceptHoverEvents(False)  # Disable hover events for performance
             self.document().setDocumentMargin(0)  # Remove default margin affecting boundingRect
             self.setFont(font)
@@ -80,7 +82,7 @@ class JQGraphicsTextItem(QGraphicsTextItem):
                 self.setGraphicsEffect(self.drop_shadow_effect)
 
             self.prepareGeometryChange()  # Call before boundingRect changes
-            self._bounding_rect = self._calculate_bounding_rect()
+            self._bounding_rect = self.calculate_bounding_rect()
 
             # Set the origin point to the center for transformations (excludes drop shadow)
             self.setTransformOriginPoint(self.collision_rect.width() / 2.0, self.collision_rect.height() / 2.0)
@@ -96,7 +98,7 @@ class JQGraphicsTextItem(QGraphicsTextItem):
         """
         return self._bounding_rect
 
-    def _calculate_bounding_rect(self) -> QRectF:
+    def calculate_bounding_rect(self) -> QRectF:
         """
         Calculate and cache the bounding rectangle considering outline and drop shadow.
 
@@ -110,7 +112,8 @@ class JQGraphicsTextItem(QGraphicsTextItem):
                 # Adjust bounding rect to accommodate the outline width
                 extra: float = self.outline_pen.widthF() / 2.0
                 temporary_rect = temporary_rect.adjusted(-extra, -extra, extra, extra)
-                self.collision_rect = temporary_rect
+
+            self.collision_rect = temporary_rect
 
             if self.drop_shadow:
                 # Adjust bounding rect to accommodate the drop shadow offset

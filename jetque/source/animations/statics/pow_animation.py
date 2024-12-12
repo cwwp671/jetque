@@ -1,11 +1,9 @@
 # src/animations/statics/pow_animation.py
-import logging
+from typing import Optional
 
-from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation, QSequentialAnimationGroup, QPauseAnimation, \
-    QAbstractAnimation
+from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation, QSequentialAnimationGroup, QPauseAnimation, QObject
 from PyQt6.QtMultimedia import QSoundEffect
 
-from jetque.source.animations.animation_text import AnimationText
 from jetque.source.animations.statics.static_animation import StaticAnimation
 
 
@@ -27,7 +25,7 @@ class PowAnimation(StaticAnimation):
             fade_out_delay: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
-            animation_object: AnimationText,
+            animation_object: Optional[QObject],
             jiggle: bool,
             jiggle_intensity: int,
             scale_percentage: float,
@@ -51,7 +49,7 @@ class PowAnimation(StaticAnimation):
             fade_out_delay (int): The fade-out delay in milliseconds.
             fade_in_easing_style (QEasingCurve.Type): The easing curve for fade-in.
             fade_out_easing_style (QEasingCurve.Type): The easing curve for fade-out.
-            animation_object (AnimationText): The object associated with the animation.
+            animation_object (Optional[QObject]): The object associated with the animation.
             jiggle (bool): Whether the jiggle effect is enabled.
             jiggle_intensity (int): The intensity of the jiggle effect in milliseconds.
             scale_percentage (float): The amount the text scales.

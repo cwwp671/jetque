@@ -1,12 +1,10 @@
 # src/animations/dynamics/parabola_animation.py
 
-from typing import List
+from typing import List, Optional
 
-from PyQt6.QtCore import QEasingCurve, QPointF
+from PyQt6.QtCore import QEasingCurve, QPointF, QObject
 from PyQt6.QtMultimedia import QSoundEffect
 
-from jetque.source.animations.animation_point_f import AnimationPointF
-from jetque.source.animations.animation_text import AnimationText
 from jetque.source.animations.dynamics.dynamic_animation import DynamicAnimation
 
 
@@ -29,10 +27,10 @@ class ParabolaAnimation(DynamicAnimation):
             fade_out_delay: int,
             fade_in_easing_style: QEasingCurve.Type,
             fade_out_easing_style: QEasingCurve.Type,
-            animation_object: AnimationText,
+            animation_object: Optional[QObject],
             ending_position: QPointF,
             easing_style: QEasingCurve.Type,
-            parabola_points: List[AnimationPointF],
+            parabola_points: Optional[List[QPointF]],
             parent=None
     ) -> None:
         """
@@ -50,10 +48,10 @@ class ParabolaAnimation(DynamicAnimation):
             fade_out_delay (int): The fade-out delay in milliseconds.
             fade_in_easing_style (QEasingCurve.Type): The easing curve for fade-in.
             fade_out_easing_style (QEasingCurve.Type): The easing curve for fade-out.
-            animation_object (AnimationText): The object associated with the animation.
+            animation_object (Optional[QObject]): The object associated with the animation.
             ending_position (QPointF): The ending position of the animation.
             easing_style (QEasingCurve.Type): The easing curve type for the animation.
-            parabola_points (List[AnimationPointF]): The positions along the curve of the animation.
+            parabola_points (Optional[List[QPointF]]): The positions along the curve of the animation.
             parent: The parent object.
         """
         super().__init__(
@@ -75,7 +73,8 @@ class ParabolaAnimation(DynamicAnimation):
         )
 
         # Initialize ParabolaAnimation specific attributes
-        self.parabola_points: List[AnimationPointF] = parabola_points
+        self.parabola_points: Optional[List[QPointF]] = parabola_points
 
-        for point in self.parabola_points:
-            self.animation.setKeyValueAt(point.key_value, point)
+        for i, point in enumerate(self.parabola_points):
+            t = i / (len(self.parabola_points) - 1)  # Normalized time (0 to 1)
+            self.animation.setKeyValueAt(t, point)
